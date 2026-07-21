@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Bell, ChevronRight, CirclePlus, Compass, Heart, LogOut, MessageCircle, Palette, Search, Settings, Sparkles, UsersRound } from "lucide-react";
+import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, Search, Settings, User, Users, UsersRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileShell } from "@/components/mobile-shell";
 
@@ -10,6 +10,9 @@ type Community = { id: string; name: string; description: string | null; image_u
 type Post = { id: string; body: string | null; created_at: string };
 
 export const Route = createFileRoute("/_authenticated/home")({ component: HomePage });
+
+type TileTone = "cyan" | "green" | "purple" | "pink" | "orange" | "blue" | "teal" | "magenta";
+type Tile = { key: string; label: string; tone: TileTone; icon: React.ReactNode; sub?: string; onClick: () => void; extra?: React.ReactNode };
 
 function HomePage() {
   const navigate = useNavigate();
@@ -53,28 +56,42 @@ function HomePage() {
     if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
   }
 
+  const initial = profile?.display_name?.slice(0, 1) ?? "?";
+  const tiles: Tile[] = [
+    { key: "profile", label: "プロフィール", tone: "cyan", icon: <User />, onClick: () => setTab("profile"), extra: <div className="tile-mini"><span className="tile-mini-avatar">{initial.slice(0, 2)}</span><small>プロフィールを見る</small></div> },
+    { key: "recruit", label: "フレンド募集", tone: "green", icon: <Megaphone />, onClick: () => setModal("recruit") },
+    { key: "community", label: "コミュニティ", tone: "purple", icon: <UsersRound />, onClick: () => setModal("community") },
+    { key: "friends", label: "フレンド", tone: "pink", icon: <User />, onClick: () => setTab("search") },
+    { key: "chat", label: "チャット", tone: "orange", icon: <MessageCircle />, onClick: () => setTab("chat") },
+    { key: "cchat", label: "コミュニティチャット", tone: "blue", icon: <MessagesSquare />, onClick: () => setTab("chat") },
+    { key: "timeline", label: "タイムライン", tone: "teal", icon: <Globe />, onClick: () => setModal("post") },
+    { key: "notify", label: "通知", tone: "magenta", icon: <BellIcon />, onClick: () => setTab("notifications") },
+  ];
+
   return <MobileShell active={tab} onChange={setTab} unread={unread}>
-    <header className="app-header"><div><p>こんにちは、</p><h1>{profile?.display_name ?? "ゲスト"}さん</h1></div><button className="header-avatar" onClick={() => setTab("profile")} aria-label="プロフィールを開く">{profile?.display_name?.slice(0, 1) ?? "?"}</button></header>
-    {tab === "home" && <main className="home-view">
-      <section className="welcome-strip"><div><Sparkles size={20} /><p>今日も素敵なつながりを<br /><strong>見つけにいこう</strong></p></div><button onClick={() => setTab("search")}>探す<ChevronRight size={18} /></button></section>
-      <div className="section-heading"><h2>ショートカット</h2><button><Settings size={16} />編集</button></div>
-      <section className="shortcut-grid">
-        <button onClick={() => setTab("search")}><span className="shortcut-icon coral"><UsersRound /></span><b>フレンド</b><small>友達を探す</small></button>
-        <button onClick={() => setModal("recruit")}><span className="shortcut-icon mint"><Heart /></span><b>フレンド募集</b><small>募集を投稿</small></button>
-        <button onClick={() => setModal("community")}><span className="shortcut-icon blue"><Compass /></span><b>コミュニティ</b><small>仲間と話す</small></button>
-        <button onClick={() => setTab("chat")}><span className="shortcut-icon yellow"><MessageCircle /></span><b>チャット</b><small>メッセージ</small></button>
+    <header className="home-header">
+      <h1 className="home-hello">{profile?.display_name ?? "ゲスト"}さん</h1>
+      <div className="home-header-actions">
+        <button aria-label="テーマ" className="round-btn"><Palette size={18} /></button>
+        <button aria-label="設定" className="round-btn"><Settings size={18} /></button>
+      </div>
+    </header>
+    {tab === "home" && <main className="home-tiles-view">
+      <section className="tile-grid">
+        {tiles.map((t) => (
+          <button key={t.key} className={`tile tile-${t.tone}`} onClick={t.onClick}>
+            <span className="tile-blob" aria-hidden="true" />
+            <span className={`tile-icon tile-icon-${t.tone}`}>{t.icon}</span>
+            <b className="tile-label">{t.label}</b>
+            {t.extra}
+          </button>
+        ))}
       </section>
-      <div className="section-heading"><h2>新着のフレンド募集</h2><button onClick={() => setTab("search")}>すべて見る<ChevronRight size={16} /></button></div>
-      <section className="recruit-list">{recruitments.length ? recruitments.slice(0, 3).map((item) => <article key={item.id}><div className="mini-avatar">つ</div><div><h3>{item.title}</h3><p>{item.body}</p><div className="tag-row">{item.min_age && <span>{item.min_age}〜{item.max_age ?? ""}歳</span>}{item.hobby_tags.slice(0, 2).map((tag) => <span key={tag}>#{tag}</span>)}</div></div><button aria-label="詳しく見る"><ChevronRight /></button></article>) : <div className="empty-state">最初の募集を投稿してみましょう</div>}</section>
-      <div className="section-heading"><h2>コミュニティ</h2><button onClick={() => setModal("community")}><CirclePlus size={16} />作成</button></div>
-      <section className="community-row">{communities.map((c) => <article key={c.id}><div className="community-art"><UsersRound /></div><b>{c.name}</b><small>{c.description ?? "新しいコミュニティ"}</small></article>)}{!communities.length && <div className="empty-state wide">コミュニティを作ると、作成者としてすぐ参加できます</div>}</section>
-      <div className="section-heading"><h2>タイムライン</h2><button onClick={() => setModal("post")}><CirclePlus size={16} />投稿</button></div>
-      <section className="timeline-preview">{posts.slice(0, 3).map((p) => <article key={p.id}><div className="mini-avatar">☺</div><p>{p.body}</p><Heart size={18} /></article>)}{!posts.length && <div className="empty-state">まだ投稿はありません</div>}</section>
     </main>}
-    {tab === "search" && <main className="simple-view"><div className="page-title"><Search /><div><p>つながりを見つける</p><h2>フレンド</h2></div></div><div className="search-box"><Search size={18} /><input placeholder="名前・趣味タグで検索" /></div><button className="primary-action" onClick={() => setModal("recruit")}><CirclePlus size={18} />フレンド募集を投稿</button><section className="recruit-list full">{recruitments.map((item) => <article key={item.id}><div className="mini-avatar">友</div><div><h3>{item.title}</h3><p>{item.body}</p><div className="tag-row"><span>{item.min_age ?? 18}〜{item.max_age ?? "制限なし"}歳</span>{item.hobby_tags.map((tag) => <span key={tag}>#{tag}</span>)}</div></div></article>)}</section></main>}
+    {tab === "search" && <main className="simple-view"><div className="page-title"><Search /><div><p>つながりを見つける</p><h2>フレンド</h2></div></div><div className="search-box"><Search size={18} /><input placeholder="名前・趣味タグで検索" /></div><button className="pill-primary" onClick={() => setModal("recruit")}><CirclePlus size={18} />フレンド募集を投稿</button><section className="recruit-list full">{recruitments.map((item) => <article key={item.id}><div className="mini-avatar">友</div><div><h3>{item.title}</h3><p>{item.body}</p><div className="tag-row"><span>{item.min_age ?? 18}〜{item.max_age ?? "制限なし"}歳</span>{item.hobby_tags.map((tag) => <span key={tag}>#{tag}</span>)}</div></div></article>)}</section></main>}
     {tab === "chat" && <main className="simple-view"><div className="page-title"><MessageCircle /><div><p>リアルタイムで話そう</p><h2>チャット</h2></div></div><div className="empty-panel"><MessageCircle /><h3>会話を始めましょう</h3><p>フレンドまたは参加中のコミュニティからチャットを開始できます。</p></div></main>}
     {tab === "notifications" && <main className="simple-view"><div className="page-title"><Bell /><div><p>あなたへのお知らせ</p><h2>通知</h2></div></div><div className="empty-panel"><Bell /><h3>{unread ? `${unread}件の未読通知` : "すべて確認済みです"}</h3><p>メッセージ、申請、いいね、コメントをここで確認できます。</p></div></main>}
-    {tab === "profile" && <main className="simple-view"><div className="profile-hero"><div className="large-avatar">{profile?.display_name?.slice(0, 1)}</div><h2>{profile?.display_name}</h2><p>@{profile?.username}</p><div className="tag-row">{profile?.hobby_tags.map((t) => <span key={t}>#{t}</span>)}</div></div><button className="settings-row"><Palette />プロフィール・テーマを編集<ChevronRight /></button><button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button></main>}
-    {modal && <div className="modal-backdrop" onMouseDown={() => setModal(null)}><section className="modal-sheet" onMouseDown={(e) => e.stopPropagation()}><div className="sheet-handle" /><h2>{modal === "recruit" ? "フレンド募集を投稿" : modal === "community" ? "コミュニティを作成" : "タイムラインへ投稿"}</h2>{modal === "recruit" && <form onSubmit={submitRecruitment}><label>募集タイトル<input name="title" required maxLength={80} /></label><label>本文<textarea name="body" required maxLength={1000} /></label><div className="two-fields"><label>最低年齢<select name="minAge"><option value="">指定なし</option>{Array.from({ length: 83 }, (_, i) => i + 18).map((age) => <option key={age}>{age}</option>)}</select></label><label>最高年齢<select name="maxAge"><option value="">指定なし</option>{Array.from({ length: 83 }, (_, i) => i + 18).map((age) => <option key={age}>{age}</option>)}</select></label></div><label>性別条件<select name="gender"><option value="">指定なし</option><option>女性</option><option>男性</option><option>その他</option></select></label><label>趣味タグ<input name="tags" placeholder="ゲーム, 音楽, カフェ" /></label><button className="primary-action">募集を保存</button></form>}{modal === "community" && <form onSubmit={submitCommunity}><label>コミュニティ名<input name="name" required maxLength={60} /></label><label>説明<textarea name="description" maxLength={1000} /></label><p className="form-hint">作成後、あなたは自動的にオーナー兼管理者として参加します。</p><button className="primary-action">作成して参加</button></form>}{modal === "post" && <form onSubmit={submitPost}><label>投稿内容<textarea name="body" required maxLength={2000} placeholder="今なにしてる？" /></label><button className="primary-action">投稿する</button></form>}{status && <p className="form-notice">{status}</p>}<button className="secondary-action" onClick={() => setModal(null)}>キャンセル</button></section></div>}
+    {tab === "profile" && <main className="simple-view"><div className="profile-hero"><div className="large-avatar">{initial}</div><h2>{profile?.display_name}</h2><p>@{profile?.username}</p><div className="tag-row">{profile?.hobby_tags.map((t) => <span key={t}>#{t}</span>)}</div></div><button className="settings-row"><Palette />プロフィール・テーマを編集<ChevronRight /></button><button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button></main>}
+    {modal && <div className="modal-backdrop" onMouseDown={() => setModal(null)}><section className="modal-sheet" onMouseDown={(e) => e.stopPropagation()}><div className="sheet-handle" /><h2>{modal === "recruit" ? "フレンド募集を投稿" : modal === "community" ? "コミュニティを作成" : "タイムラインへ投稿"}</h2>{modal === "recruit" && <form onSubmit={submitRecruitment}><label>募集タイトル<input name="title" required maxLength={80} /></label><label>本文<textarea name="body" required maxLength={1000} /></label><div className="two-fields"><label>最低年齢<select name="minAge"><option value="">指定なし</option>{Array.from({ length: 83 }, (_, i) => i + 18).map((age) => <option key={age}>{age}</option>)}</select></label><label>最高年齢<select name="maxAge"><option value="">指定なし</option>{Array.from({ length: 83 }, (_, i) => i + 18).map((age) => <option key={age}>{age}</option>)}</select></label></div><label>性別条件<select name="gender"><option value="">指定なし</option><option>女性</option><option>男性</option><option>その他</option></select></label><label>趣味タグ<input name="tags" placeholder="ゲーム, 音楽, カフェ" /></label><button className="pill-primary">募集を保存</button></form>}{modal === "community" && <form onSubmit={submitCommunity}><label>コミュニティ名<input name="name" required maxLength={60} /></label><label>説明<textarea name="description" maxLength={1000} /></label><p className="form-hint">作成後、あなたは自動的にオーナー兼管理者として参加します。</p><button className="pill-primary">作成して参加</button></form>}{modal === "post" && <form onSubmit={submitPost}><label>投稿内容<textarea name="body" required maxLength={2000} placeholder="今なにしてる？" /></label><button className="pill-primary">投稿する</button></form>}{status && <p className="form-notice">{status}</p>}<button className="secondary-action" onClick={() => setModal(null)}>キャンセル</button></section></div>}
   </MobileShell>;
 }
