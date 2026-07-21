@@ -45,7 +45,7 @@ function HomePage() {
   }
   async function submitCommunity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setStatus("作成中…"); const f = new FormData(event.currentTarget);
-    const { error } = await supabase.rpc("create_community", { _name: String(f.get("name")), _description: String(f.get("description")) || null, _image_url: null });
+    const { error } = await supabase.rpc("create_community", { _name: String(f.get("name")), _description: String(f.get("description")) || undefined, _image_url: undefined });
     if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
   }
   async function submitPost(event: FormEvent<HTMLFormElement>) {
