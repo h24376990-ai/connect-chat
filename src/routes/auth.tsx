@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
+import { AtSign, Eye, EyeOff, Lock, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { completeRegistration, signInWithUsername } from "@/lib/auth.functions";
 
@@ -51,29 +51,32 @@ function AuthPage() {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-brand" aria-labelledby="auth-title">
-        <div className="brand-mark" aria-hidden="true"><span /><span /><span /></div>
-        <p className="eyebrow">いつもの毎日に、新しいつながりを。</p>
-        <h1 id="auth-title">つながり<br />チャット</h1>
-        <p className="brand-copy">気の合う友達やコミュニティと、安心して話せる場所。</p>
-      </section>
-      <section className="auth-panel">
-        <div className="auth-tabs" role="tablist">
-          <button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>ログイン</button>
-          <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>新規登録</button>
+    <main className="auth-screen">
+      <div className="auth-hero">
+        <div className="auth-logo" aria-hidden="true"><MessageCircle strokeWidth={2.5} /></div>
+        <h1 className="auth-title">つながり</h1>
+        <p className="auth-sub">SNS + チャットアプリ</p>
+      </div>
+      <section className="auth-card">
+        <div className="auth-pill" role="tablist">
+          <button type="button" className={mode === "login" ? "on" : ""} onClick={() => setMode("login")}>ログイン</button>
+          <button type="button" className={mode === "signup" ? "on" : ""} onClick={() => setMode("signup")}>新規登録</button>
         </div>
         <form onSubmit={submit} className="auth-form">
-          {mode === "signup" && <label>お名前<input name="displayName" required maxLength={50} placeholder="例：はる" /></label>}
-          <label>ユーザーID<div className="field-with-icon"><UserRound size={18} /><input name="username" required minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]+" autoCapitalize="none" placeholder="半角英数字・_" /></div></label>
-          {mode === "signup" && <label>メールアドレス<input name="email" type="email" required maxLength={254} placeholder="確認・パスワード再設定用" /></label>}
-          <label>パスワード<div className="field-with-icon"><LockKeyhole size={18} /><input name="password" type={showPassword ? "text" : "password"} required minLength={8} maxLength={128} /><button type="button" className="icon-button" onClick={() => setShowPassword((v) => !v)} aria-label="パスワード表示を切り替え">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>
+          {mode === "signup" && (
+            <div className="pill-field"><AtSign size={18} /><input name="displayName" required maxLength={50} placeholder="お名前（表示名）" /></div>
+          )}
+          <div className="pill-field"><AtSign size={18} /><input name="username" required minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]+" autoCapitalize="none" placeholder="ユーザーID" /></div>
+          {mode === "signup" && (
+            <div className="pill-field"><AtSign size={18} /><input name="email" type="email" required maxLength={254} placeholder="メールアドレス（復旧用）" /></div>
+          )}
+          <div className="pill-field"><Lock size={18} /><input name="password" type={showPassword ? "text" : "password"} required minLength={6} maxLength={128} placeholder="パスワード（6文字以上）" /><button type="button" className="pill-eye" onClick={() => setShowPassword((v) => !v)} aria-label="パスワード表示切替">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
           {error && <p className="form-error" role="alert">{error}</p>}
           {notice && <p className="form-notice" role="status">{notice}</p>}
-          <button className="primary-action" disabled={loading}>{loading ? "処理中…" : mode === "login" ? "ログイン" : "アカウントを作成"}<ArrowRight size={18} /></button>
+          <button className="pill-primary" disabled={loading}>{loading ? "処理中…" : mode === "login" ? "ログイン" : "アカウントを作成"}</button>
         </form>
-        <p className="auth-footnote">登録により利用規約とプライバシーポリシーに同意したものとみなされます。</p>
       </section>
+      <p className="auth-legal">登録すると利用規約とプライバシーポリシーに同意したことになります</p>
     </main>
   );
 }
