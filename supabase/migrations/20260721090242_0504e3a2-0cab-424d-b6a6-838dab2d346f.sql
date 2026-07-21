@@ -1,0 +1,1 @@
+CREATE POLICY "Service role manages login aliases" ON public.login_aliases FOR ALL TO service_role USING (true) WITH CHECK (true);
