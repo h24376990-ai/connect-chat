@@ -1,0 +1,12 @@
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.create_community(text, text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.approve_community_member(uuid, uuid, boolean) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.transfer_community_owner(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.remove_community_member(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.dissolve_community(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_community(text, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.approve_community_member(uuid, uuid, boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.transfer_community_owner(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.remove_community_member(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.dissolve_community(uuid) TO authenticated;
