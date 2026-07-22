@@ -29,22 +29,36 @@ function HomePage() {
   async function load() {
     const [profileRes, recruitRes, communityRes, postRes, notificationRes] = await Promise.all([
       supabase.from("profiles").select("id,display_name,username,avatar_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
-      supabase.from("friend_recruitments").select("id,title,body,min_age,max_age,hobby_tags,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(6),
+      supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       supabase.from("communities").select("id,name,description,image_url").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(5),
       supabase.from("posts").select("id,body,created_at").order("created_at", { ascending: false }).range(0, 9),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
     ]);
     if (profileRes.data) setProfile(profileRes.data as Profile);
-    setRecruitments((recruitRes.data ?? []) as Recruitment[]); setCommunities((communityRes.data ?? []) as Community[]); setPosts((postRes.data ?? []) as Post[]); setUnread(notificationRes.count ?? 0);
+    const recruits = (recruitRes.data ?? []) as Recruitment[];
+    const authorIds = Array.from(new Set(recruits.map((r) => r.author_id)));
+    if (authorIds.length) {
+      const { data: authors } = await supabase.from("profiles").select("id,display_name,avatar_url").in("id", authorIds);
+      const map = new Map((authors ?? []).map((a) => [a.id, a]));
+      recruits.forEach((r) => { const a = map.get(r.author_id); r.author = a ? { display_name: a.display_name, avatar_url: a.avatar_url } : null; });
+    }
+    setRecruitments(recruits); setCommunities((communityRes.data ?? []) as Community[]); setPosts((postRes.data ?? []) as Post[]); setUnread(notificationRes.count ?? 0);
   }
 
   useEffect(() => { load(); const channel = supabase.channel(`home-${user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, load).subscribe(); return () => { supabase.removeChannel(channel); }; }, [user.id]);
 
   async function submitRecruitment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setStatus("保存中…"); const f = new FormData(event.currentTarget);
-    const min = Number(f.get("minAge")); const max = Number(f.get("maxAge"));
-    const { error } = await supabase.from("friend_recruitments").insert({ author_id: user.id, title: String(f.get("title")), body: String(f.get("body")), min_age: min || null, max_age: max || null, gender_condition: String(f.get("gender")) || null, hobby_tags: String(f.get("tags")).split(",").map((v) => v.trim()).filter(Boolean) });
+    const body = String(f.get("body") ?? "").trim();
+    const { error } = await supabase.from("friend_recruitments").insert({ author_id: user.id, title: String(f.get("title")), body: body || null });
     if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
+  }
+
+  async function applyFriendRequest(addresseeId: string) {
+    if (addresseeId === user.id) return;
+    const { error } = await supabase.rpc("send_friend_request", { _addressee: addresseeId });
+    if (error) { setStatus(error.message); return; }
+    setStatus("フレンド申請を送信しました"); await load(); setTimeout(() => setStatus(""), 2000);
   }
   async function submitCommunity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setStatus("作成中…"); const f = new FormData(event.currentTarget);
