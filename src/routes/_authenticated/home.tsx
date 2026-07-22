@@ -200,7 +200,19 @@ function HomePage() {
       }
     </main>}
     {tab === "chat" && <main className="simple-view"><div className="page-title"><MessageCircle /><div><p>リアルタイムで話そう</p><h2>チャット</h2></div></div><div className="empty-panel"><MessageCircle /><h3>会話を始めましょう</h3><p>フレンドまたは参加中のコミュニティからチャットを開始できます。</p></div></main>}
-    {tab === "notifications" && <main className="simple-view"><div className="page-title"><Bell /><div><p>あなたへのお知らせ</p><h2>通知</h2></div></div><div className="empty-panel"><Bell /><h3>{unread ? `${unread}件の未読通知` : "すべて確認済みです"}</h3><p>メッセージ、申請、いいね、コメントをここで確認できます。</p></div></main>}
+    {tab === "notifications" && <main className="simple-view">
+      <div className="page-title"><Bell /><div><p>あなたへのお知らせ</p><h2>通知</h2></div></div>
+      {unread > 0 && <button className="ghost-pill" onClick={markNotificationsRead} style={{ alignSelf: "flex-end" }}>すべて既読</button>}
+      {notifications.length === 0 ? <div className="empty-panel"><Bell /><h3>通知はまだありません</h3><p>メッセージ、申請、いいね、コメントをここで確認できます。</p></div> :
+        <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {notifications.map((n) => <article key={n.id} className={`card-tile ${n.read_at ? "card-tile-blue" : "card-tile-magenta"}`} style={{ padding: 14 }}>
+            <h4 className="card-tile-title" style={{ fontSize: 14 }}>{n.title}</h4>
+            {n.body && <p className="card-tile-body" style={{ marginTop: 4 }}>{n.body}</p>}
+            <span className="card-tile-meta" style={{ marginTop: 6, display: "block" }}>{new Date(n.created_at).toLocaleString("ja-JP")}</span>
+          </article>)}
+        </section>
+      }
+    </main>}
     {tab === "profile" && <main className="simple-view"><div className="profile-hero"><div className="large-avatar">{initial}</div><h2>{profile?.display_name}</h2><p>@{profile?.username}</p><div className="tag-row">{profile?.hobby_tags.map((t) => <span key={t}>#{t}</span>)}</div></div><button className="settings-row"><Palette />プロフィール・テーマを編集<ChevronRight /></button><button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button></main>}
     {modal && <div className="modal-backdrop" onMouseDown={() => setModal(null)}><section className="modal-sheet" onMouseDown={(e) => e.stopPropagation()}><div className="sheet-handle" /><h2>{modal === "recruit" ? "フレンド募集を投稿" : modal === "community" ? "コミュニティを作成" : "タイムラインへ投稿"}</h2>{modal === "recruit" && <form onSubmit={submitRecruitment}><label>募集タイトル<input name="title" required maxLength={80} placeholder="ゲーム仲間募集！" /></label><label>ひとこと（空白可）<textarea name="body" maxLength={1000} placeholder="よろしくね" /></label><button className="pill-primary">募集を投稿</button></form>}{modal === "community" && <form onSubmit={submitCommunity}><label>コミュニティ名<input name="name" required maxLength={60} /></label><label>説明<textarea name="description" maxLength={1000} /></label><p className="form-hint">作成後、あなたは自動的にオーナー兼管理者として参加します。</p><button className="pill-primary">作成して参加</button></form>}{modal === "post" && <form onSubmit={submitPost}><label>投稿内容<textarea name="body" required maxLength={2000} placeholder="今なにしてる？" /></label><button className="pill-primary">投稿する</button></form>}{status && <p className="form-notice">{status}</p>}<button className="secondary-action" onClick={() => setModal(null)}>キャンセル</button></section></div>}
   </MobileShell>;
