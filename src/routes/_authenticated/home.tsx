@@ -55,7 +55,7 @@ function HomePage() {
   }
 
   async function respondFriendRequest(id: string, accept: boolean) {
-    const { error } = await supabase.from("friendships").update({ status: accept ? "accepted" : "declined" }).eq("id", id);
+    const { error } = await supabase.from("friendships").update({ status: accept ? "accepted" : "rejected" }).eq("id", id);
     if (error) { setStatus(error.message); return; }
     await load();
   }
