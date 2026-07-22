@@ -31,22 +31,38 @@ function HomePage() {
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
 
   async function load() {
-    const [profileRes, recruitRes, communityRes, postRes, notificationRes] = await Promise.all([
+    const [profileRes, recruitRes, communityRes, postRes, notificationRes, notifListRes, friendReqRes] = await Promise.all([
       supabase.from("profiles").select("id,display_name,username,avatar_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
       supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       supabase.from("communities").select("id,name,description,image_url").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(5),
       supabase.from("posts").select("id,body,created_at").order("created_at", { ascending: false }).range(0, 9),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
+      supabase.from("notifications").select("id,title,body,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
+      supabase.from("friendships").select("id,requester_id,created_at").eq("addressee_id", user.id).eq("status", "pending").order("created_at", { ascending: false }),
     ]);
     if (profileRes.data) setProfile(profileRes.data as Profile);
     const recruits = (recruitRes.data ?? []) as Recruitment[];
-    const authorIds = Array.from(new Set(recruits.map((r) => r.author_id)));
+    const requests = (friendReqRes.data ?? []) as FriendRequest[];
+    const authorIds = Array.from(new Set([...recruits.map((r) => r.author_id), ...requests.map((r) => r.requester_id)]));
     if (authorIds.length) {
       const { data: authors } = await supabase.from("profiles").select("id,display_name,avatar_url").in("id", authorIds);
       const map = new Map((authors ?? []).map((a) => [a.id, a]));
       recruits.forEach((r) => { const a = map.get(r.author_id); r.author = a ? { display_name: a.display_name, avatar_url: a.avatar_url } : null; });
+      requests.forEach((r) => { const a = map.get(r.requester_id); r.requester = a ? { display_name: a.display_name, avatar_url: a.avatar_url } : null; });
     }
     setRecruitments(recruits); setCommunities((communityRes.data ?? []) as Community[]); setPosts((postRes.data ?? []) as Post[]); setUnread(notificationRes.count ?? 0);
+    setNotifications((notifListRes.data ?? []) as Notification[]); setFriendRequests(requests);
+  }
+
+  async function respondFriendRequest(id: string, accept: boolean) {
+    const { error } = await supabase.from("friendships").update({ status: accept ? "accepted" : "declined" }).eq("id", id);
+    if (error) { setStatus(error.message); return; }
+    await load();
+  }
+
+  async function markNotificationsRead() {
+    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("user_id", user.id).is("read_at", null);
+    await load();
   }
 
   useEffect(() => { load(); const channel = supabase.channel(`home-${user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, load).subscribe(); return () => { supabase.removeChannel(channel); }; }, [user.id]);
