@@ -27,6 +27,8 @@ function HomePage() {
   const [unread, setUnread] = useState(0);
   const [modal, setModal] = useState<"recruit" | "community" | "post" | null>(null);
   const [status, setStatus] = useState("");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
 
   async function load() {
     const [profileRes, recruitRes, communityRes, postRes, notificationRes] = await Promise.all([
