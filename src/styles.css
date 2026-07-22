@@ -270,4 +270,35 @@
   .tile-magenta .tile-blob { background: oklch(0.92 0.06 335); }
 
   .bottom-nav { background: color-mix(in oklch, #fff 88%, transparent); border-top: 1px solid oklch(0.9 0.02 210); }
+
+  /* --- Discover (friend recruit + community) card tiles --- */
+  .discover-view { padding-bottom: 40px; }
+  .discover-section-head { display: flex; align-items: end; justify-content: space-between; margin: 22px 4px 12px; }
+  .discover-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .14em; color: var(--muted-foreground); }
+  .discover-section-head h3 { margin: 2px 0 0; font-size: 18px; font-weight: 900; color: oklch(0.22 0.03 240); }
+  .ghost-pill { border: 0; background: #fff; color: var(--primary); font-weight: 800; font-size: 12px; border-radius: 999px; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 6px 16px -8px color-mix(in oklch, var(--primary) 40%, transparent); }
+
+  .card-tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card-tile { position: relative; overflow: hidden; background: #fff; border-radius: 22px; padding: 16px 15px 16px; min-height: 172px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 12px 28px -20px color-mix(in oklch, var(--primary) 45%, transparent); border: 1px solid color-mix(in oklch, var(--primary) 6%, transparent); }
+  .card-tile-head { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
+  .card-tile-meta { font-size: 10px; font-weight: 700; color: var(--muted-foreground); display: inline-flex; align-items: center; gap: 4px; }
+  .card-tile-title { position: relative; z-index: 1; margin: 4px 0 0; font-size: 14px; font-weight: 800; color: oklch(0.22 0.03 240); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-tile-body { position: relative; z-index: 1; margin: 0; font-size: 11px; color: var(--muted-foreground); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-tile .tag-row { position: relative; z-index: 1; margin-top: auto; }
+  .card-tile .tag-row span { background: color-mix(in oklch, var(--primary) 8%, transparent); color: var(--primary); font-weight: 700; }
+  .card-tile .tag-row .tag-strong { background: var(--primary); color: #fff; }
+  .card-tile-cta { position: relative; z-index: 1; margin-top: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; color: var(--primary); }
+
+  .card-tile-cyan .tile-blob { background: oklch(0.88 0.08 200); }
+  .card-tile-green .tile-blob { background: oklch(0.88 0.08 165); }
+  .card-tile-purple .tile-blob { background: oklch(0.9 0.06 300); }
+  .card-tile-pink .tile-blob { background: oklch(0.92 0.05 15); }
+  .card-tile-orange .tile-blob { background: oklch(0.92 0.06 65); }
+  .card-tile-blue .tile-blob { background: oklch(0.9 0.06 255); }
+  .card-tile-teal .tile-blob { background: oklch(0.9 0.06 190); }
+  .card-tile-magenta .tile-blob { background: oklch(0.92 0.06 335); }
+
+  .empty-panel.soft { margin-top: 8px; background: #fff; border-radius: 20px; padding: 24px 20px; box-shadow: 0 8px 22px -18px color-mix(in oklch, var(--primary) 35%, transparent); }
+  .empty-panel.soft > svg { width: 34px; height: 34px; }
+  .empty-panel.soft p { margin: 10px 0 0; font-size: 12px; }
 }

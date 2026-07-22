@@ -88,7 +88,59 @@ function HomePage() {
         ))}
       </section>
     </main>}
-    {tab === "search" && <main className="simple-view"><div className="page-title"><Search /><div><p>つながりを見つける</p><h2>フレンド</h2></div></div><div className="search-box"><Search size={18} /><input placeholder="名前・趣味タグで検索" /></div><button className="pill-primary" onClick={() => setModal("recruit")}><CirclePlus size={18} />フレンド募集を投稿</button><section className="recruit-list full">{recruitments.map((item) => <article key={item.id}><div className="mini-avatar">友</div><div><h3>{item.title}</h3><p>{item.body}</p><div className="tag-row"><span>{item.min_age ?? 18}〜{item.max_age ?? "制限なし"}歳</span>{item.hobby_tags.map((tag) => <span key={tag}>#{tag}</span>)}</div></div></article>)}</section></main>}
+    {tab === "search" && <main className="simple-view discover-view">
+      <div className="page-title"><Search /><div><p>つながりを見つける</p><h2>みつける</h2></div></div>
+      <div className="search-box"><Search size={18} /><input placeholder="名前・趣味タグで検索" /></div>
+
+      <div className="discover-section-head">
+        <div><span className="discover-eyebrow">FRIENDS</span><h3>フレンド募集</h3></div>
+        <button className="ghost-pill" onClick={() => setModal("recruit")}><CirclePlus size={16} />投稿</button>
+      </div>
+      {recruitments.length === 0 ? <div className="empty-panel soft"><Megaphone /><p>まだ募集がありません。最初の投稿をしてみましょう。</p></div> :
+        <section className="card-tile-grid">
+          {recruitments.map((item, i) => {
+            const tones: TileTone[] = ["green", "cyan", "orange", "pink", "purple", "teal"];
+            const tone = tones[i % tones.length];
+            return <article key={item.id} className={`card-tile card-tile-${tone}`}>
+              <span className="tile-blob" aria-hidden="true" />
+              <header className="card-tile-head">
+                <span className={`tile-icon tile-icon-${tone}`}><Megaphone /></span>
+                <span className="card-tile-meta">{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
+              </header>
+              <h4 className="card-tile-title">{item.title}</h4>
+              <p className="card-tile-body">{item.body}</p>
+              <div className="tag-row">
+                <span className="tag-strong">{item.min_age ?? 18}〜{item.max_age ?? "∞"}歳</span>
+                {item.hobby_tags.slice(0, 3).map((tag) => <span key={tag}>#{tag}</span>)}
+              </div>
+            </article>;
+          })}
+        </section>
+      }
+
+      <div className="discover-section-head">
+        <div><span className="discover-eyebrow">COMMUNITIES</span><h3>コミュニティ</h3></div>
+        <button className="ghost-pill" onClick={() => setModal("community")}><CirclePlus size={16} />作成</button>
+      </div>
+      {communities.length === 0 ? <div className="empty-panel soft"><UsersRound /><p>コミュニティはまだありません。作成して仲間を集めましょう。</p></div> :
+        <section className="card-tile-grid">
+          {communities.map((item, i) => {
+            const tones: TileTone[] = ["purple", "blue", "magenta", "teal", "orange", "pink"];
+            const tone = tones[i % tones.length];
+            return <article key={item.id} className={`card-tile card-tile-${tone}`}>
+              <span className="tile-blob" aria-hidden="true" />
+              <header className="card-tile-head">
+                <span className={`tile-icon tile-icon-${tone}`}><UsersRound /></span>
+                <span className="card-tile-meta"><Users size={12} /> グループ</span>
+              </header>
+              <h4 className="card-tile-title">{item.name}</h4>
+              <p className="card-tile-body">{item.description ?? "説明はまだ登録されていません。"}</p>
+              <div className="card-tile-cta">参加する<ChevronRight size={14} /></div>
+            </article>;
+          })}
+        </section>
+      }
+    </main>}
     {tab === "chat" && <main className="simple-view"><div className="page-title"><MessageCircle /><div><p>リアルタイムで話そう</p><h2>チャット</h2></div></div><div className="empty-panel"><MessageCircle /><h3>会話を始めましょう</h3><p>フレンドまたは参加中のコミュニティからチャットを開始できます。</p></div></main>}
     {tab === "notifications" && <main className="simple-view"><div className="page-title"><Bell /><div><p>あなたへのお知らせ</p><h2>通知</h2></div></div><div className="empty-panel"><Bell /><h3>{unread ? `${unread}件の未読通知` : "すべて確認済みです"}</h3><p>メッセージ、申請、いいね、コメントをここで確認できます。</p></div></main>}
     {tab === "profile" && <main className="simple-view"><div className="profile-hero"><div className="large-avatar">{initial}</div><h2>{profile?.display_name}</h2><p>@{profile?.username}</p><div className="tag-row">{profile?.hobby_tags.map((t) => <span key={t}>#{t}</span>)}</div></div><button className="settings-row"><Palette />プロフィール・テーマを編集<ChevronRight /></button><button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button></main>}
