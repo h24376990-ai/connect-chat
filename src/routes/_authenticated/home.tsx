@@ -115,18 +115,17 @@ function HomePage() {
           {recruitments.map((item, i) => {
             const tones: TileTone[] = ["green", "cyan", "orange", "pink", "purple", "teal"];
             const tone = tones[i % tones.length];
+            const authorInitial = (item.author?.display_name ?? "?").slice(0, 1);
+            const isMine = item.author_id === user.id;
             return <article key={item.id} className={`card-tile card-tile-${tone}`}>
               <span className="tile-blob" aria-hidden="true" />
               <header className="card-tile-head">
-                <span className={`tile-icon tile-icon-${tone}`}><Megaphone /></span>
-                <span className="card-tile-meta">{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
+                <span className={`tile-icon tile-icon-${tone}`}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</span>
+                <span className="card-tile-meta">{item.author?.display_name ?? "匿名"}・{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
               </header>
               <h4 className="card-tile-title">{item.title}</h4>
-              <p className="card-tile-body">{item.body}</p>
-              <div className="tag-row">
-                <span className="tag-strong">{item.min_age ?? 18}〜{item.max_age ?? "∞"}歳</span>
-                {item.hobby_tags.slice(0, 3).map((tag) => <span key={tag}>#{tag}</span>)}
-              </div>
+              {item.body && <p className="card-tile-body">{item.body}</p>}
+              <button className="pill-primary" style={{ marginTop: 8 }} disabled={isMine} onClick={() => applyFriendRequest(item.author_id)}>{isMine ? "自分の募集" : "申請する！"}</button>
             </article>;
           })}
         </section>
