@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MobileShell } from "@/components/mobile-shell";
 
 type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; bio: string | null; hobby_tags: string[]; theme_color: string };
-type Recruitment = { id: string; title: string; body: string; min_age: number | null; max_age: number | null; hobby_tags: string[]; created_at: string };
+type Recruitment = { id: string; author_id: string; title: string; body: string | null; created_at: string; author?: { display_name: string; avatar_url: string | null } | null };
 type Community = { id: string; name: string; description: string | null; image_url: string | null };
 type Post = { id: string; body: string | null; created_at: string };
 
