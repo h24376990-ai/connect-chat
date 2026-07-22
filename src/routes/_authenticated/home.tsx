@@ -126,6 +126,31 @@ function HomePage() {
       <div className="page-title"><Search /><div><p>つながりを見つける</p><h2>みつける</h2></div></div>
       <div className="search-box"><Search size={18} /><input placeholder="名前・趣味タグで検索" /></div>
 
+      {friendRequests.length > 0 && <>
+        <div className="discover-section-head">
+          <div><span className="discover-eyebrow">REQUESTS</span><h3>届いたフレンド申請</h3></div>
+        </div>
+        <section className="card-tile-grid">
+          {friendRequests.map((req) => {
+            const name = req.requester?.display_name ?? "ユーザー";
+            const ini = name.slice(0, 1);
+            return <article key={req.id} className="card-tile card-tile-pink">
+              <span className="tile-blob" aria-hidden="true" />
+              <header className="card-tile-head">
+                <span className="tile-icon tile-icon-pink">{req.requester?.avatar_url ? <img src={req.requester.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : ini}</span>
+                <span className="card-tile-meta">{new Date(req.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
+              </header>
+              <h4 className="card-tile-title">{name}さんから申請</h4>
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button className="pill-primary" style={{ flex: 1 }} onClick={() => respondFriendRequest(req.id, true)}>承認</button>
+                <button className="secondary-action" style={{ flex: 1 }} onClick={() => respondFriendRequest(req.id, false)}>拒否</button>
+              </div>
+            </article>;
+          })}
+        </section>
+      </>}
+
+
       <div className="discover-section-head">
         <div><span className="discover-eyebrow">FRIENDS</span><h3>フレンド募集</h3></div>
         <button className="ghost-pill" onClick={() => setModal("recruit")}><CirclePlus size={16} />投稿</button>
