@@ -8,6 +8,8 @@ type Profile = { id: string; display_name: string; username: string; avatar_url:
 type Recruitment = { id: string; author_id: string; title: string; body: string | null; created_at: string; author?: { display_name: string; avatar_url: string | null } | null };
 type Community = { id: string; name: string; description: string | null; image_url: string | null };
 type Post = { id: string; body: string | null; created_at: string };
+type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null };
+type FriendRequest = { id: string; requester_id: string; created_at: string; requester?: { display_name: string; avatar_url: string | null } | null };
 
 export const Route = createFileRoute("/_authenticated/home")({ component: HomePage });
 
