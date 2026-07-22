@@ -155,7 +155,7 @@ export type Database = {
       friend_recruitments: {
         Row: {
           author_id: string
-          body: string
+          body: string | null
           created_at: string
           gender_condition: string | null
           hobby_tags: string[]
@@ -168,7 +168,7 @@ export type Database = {
         }
         Insert: {
           author_id: string
-          body: string
+          body?: string | null
           created_at?: string
           gender_condition?: string | null
           hobby_tags?: string[]
@@ -181,7 +181,7 @@ export type Database = {
         }
         Update: {
           author_id?: string
-          body?: string
+          body?: string | null
           created_at?: string
           gender_condition?: string | null
           hobby_tags?: string[]
@@ -605,6 +605,7 @@ export type Database = {
         Args: { _community_id: string; _user_id: string }
         Returns: undefined
       }
+      send_friend_request: { Args: { _addressee: string }; Returns: undefined }
       transfer_community_owner: {
         Args: { _community_id: string; _new_owner_id: string }
         Returns: undefined
