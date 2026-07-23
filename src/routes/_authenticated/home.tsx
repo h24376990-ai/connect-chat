@@ -29,8 +29,8 @@ function HomePage() {
   const [status, setStatus] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
-  const [minePage, setMinePage] = useState(1);
-  const [othersPage, setOthersPage] = useState(1);
+  const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
   async function load() {
