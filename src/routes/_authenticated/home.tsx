@@ -34,7 +34,7 @@ function HomePage() {
   const PAGE_SIZE = 10;
 
   async function load() {
-    const [profileRes, recruitRes, communityRes, postRes, notificationRes, notifListRes, friendReqRes] = await Promise.all([
+    const [profileRes, recruitRes, communityRes, postRes, notificationRes, notifListRes, friendReqRes, sentRes] = await Promise.all([
       supabase.from("profiles").select("id,display_name,username,avatar_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
       supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(200),
       supabase.from("communities").select("id,name,description,image_url").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(5),
@@ -42,6 +42,7 @@ function HomePage() {
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
       supabase.from("notifications").select("id,title,body,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
       supabase.from("friendships").select("id,requester_id,created_at").eq("addressee_id", user.id).eq("status", "pending").order("created_at", { ascending: false }),
+      supabase.from("friendships").select("addressee_id,requester_id,status").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
     ]);
     if (profileRes.data) setProfile(profileRes.data as Profile);
     const recruits = (recruitRes.data ?? []) as Recruitment[];
@@ -55,6 +56,12 @@ function HomePage() {
     }
     setRecruitments(recruits); setCommunities((communityRes.data ?? []) as Community[]); setPosts((postRes.data ?? []) as Post[]); setUnread(notificationRes.count ?? 0);
     setNotifications((notifListRes.data ?? []) as Notification[]); setFriendRequests(requests);
+    const sent = new Set<string>();
+    ((sentRes.data ?? []) as Array<{ addressee_id: string; requester_id: string; status: string }>).forEach((f) => {
+      const other = f.requester_id === user.id ? f.addressee_id : f.requester_id;
+      if (f.status === "pending" || f.status === "accepted") sent.add(other);
+    });
+    setSentRequests(sent);
   }
 
   async function respondFriendRequest(id: string, accept: boolean) {
