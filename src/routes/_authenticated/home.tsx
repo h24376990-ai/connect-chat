@@ -155,52 +155,67 @@ function HomePage() {
 
 
       <div className="discover-section-head">
-        <div><span className="discover-eyebrow">FRIENDS</span><h3>フレンド募集</h3></div>
+        <div><span className="discover-eyebrow">MINE</span><h3>自分の募集</h3></div>
         <button className="ghost-pill" onClick={() => setModal("recruit")}><CirclePlus size={16} />投稿</button>
       </div>
-      {recruitments.length === 0 ? <div className="empty-panel soft"><Megaphone /><p>まだ募集がありません。最初の投稿をしてみましょう。</p></div> :
-        <section className="card-tile-grid">
-          {recruitments.map((item, i) => {
-            const tones: TileTone[] = ["green", "cyan", "orange", "pink", "purple", "teal"];
-            const tone = tones[i % tones.length];
-            const authorInitial = (item.author?.display_name ?? "?").slice(0, 1);
-            const isMine = item.author_id === user.id;
-            return <article key={item.id} className={`card-tile card-tile-${tone}`}>
-              <span className="tile-blob" aria-hidden="true" />
-              <header className="card-tile-head">
-                <span className={`tile-icon tile-icon-${tone}`}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</span>
-                <span className="card-tile-meta">{item.author?.display_name ?? "匿名"}・{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
-              </header>
-              <h4 className="card-tile-title">{item.title}</h4>
-              {item.body && <p className="card-tile-body">{item.body}</p>}
-              <button className="pill-primary" style={{ marginTop: 8 }} disabled={isMine} onClick={() => applyFriendRequest(item.author_id)}>{isMine ? "自分の募集" : "申請する！"}</button>
-            </article>;
-          })}
-        </section>
-      }
+      {(() => {
+        const mine = recruitments.filter((r) => r.author_id === user.id);
+        if (mine.length === 0) return <div className="empty-panel soft"><Megaphone /><p>まだ自分の募集はありません。</p></div>;
+        const totalPages = Math.max(1, Math.ceil(mine.length / PAGE_SIZE));
+        const page = Math.min(minePage, totalPages);
+        const slice = mine.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+        return <>
+          <section className="card-tile-grid">
+            {slice.map((item, i) => {
+              const tones: TileTone[] = ["cyan", "teal", "blue", "purple"];
+              const tone = tones[i % tones.length];
+              const authorInitial = (item.author?.display_name ?? "?").slice(0, 1);
+              return <article key={item.id} className={`card-tile card-tile-${tone}`}>
+                <span className="tile-blob" aria-hidden="true" />
+                <header className="card-tile-head">
+                  <span className={`tile-icon tile-icon-${tone}`}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</span>
+                  <span className="card-tile-meta">{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
+                </header>
+                <h4 className="card-tile-title">{item.title}</h4>
+                {item.body && <p className="card-tile-body">{item.body}</p>}
+                <button className="pill-primary" style={{ marginTop: 8 }} disabled>自分の募集</button>
+              </article>;
+            })}
+          </section>
+          {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={page <= 1} onClick={() => setMinePage(page - 1)}>← 前</button><span className="pager-info">{page} / {totalPages}</span><button className="ghost-pill" disabled={page >= totalPages} onClick={() => setMinePage(page + 1)}>次 →</button></div>}
+        </>;
+      })()}
 
       <div className="discover-section-head">
-        <div><span className="discover-eyebrow">COMMUNITIES</span><h3>コミュニティ</h3></div>
-        <button className="ghost-pill" onClick={() => setModal("community")}><CirclePlus size={16} />作成</button>
+        <div><span className="discover-eyebrow">FRIENDS</span><h3>みんなの募集</h3></div>
       </div>
-      {communities.length === 0 ? <div className="empty-panel soft"><UsersRound /><p>コミュニティはまだありません。作成して仲間を集めましょう。</p></div> :
-        <section className="card-tile-grid">
-          {communities.map((item, i) => {
-            const tones: TileTone[] = ["purple", "blue", "magenta", "teal", "orange", "pink"];
-            const tone = tones[i % tones.length];
-            return <article key={item.id} className={`card-tile card-tile-${tone}`}>
-              <span className="tile-blob" aria-hidden="true" />
-              <header className="card-tile-head">
-                <span className={`tile-icon tile-icon-${tone}`}><UsersRound /></span>
-                <span className="card-tile-meta"><Users size={12} /> グループ</span>
-              </header>
-              <h4 className="card-tile-title">{item.name}</h4>
-              <p className="card-tile-body">{item.description ?? "説明はまだ登録されていません。"}</p>
-              <div className="card-tile-cta">参加する<ChevronRight size={14} /></div>
-            </article>;
-          })}
-        </section>
-      }
+      {(() => {
+        const others = recruitments.filter((r) => r.author_id !== user.id);
+        if (others.length === 0) return <div className="empty-panel soft"><Megaphone /><p>まだ他のユーザーの募集がありません。</p></div>;
+        const totalPages = Math.max(1, Math.ceil(others.length / PAGE_SIZE));
+        const page = Math.min(othersPage, totalPages);
+        const slice = others.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+        return <>
+          <section className="card-tile-grid">
+            {slice.map((item, i) => {
+              const tones: TileTone[] = ["green", "orange", "pink", "purple", "teal", "magenta"];
+              const tone = tones[i % tones.length];
+              const authorInitial = (item.author?.display_name ?? "?").slice(0, 1);
+              return <article key={item.id} className={`card-tile card-tile-${tone}`}>
+                <span className="tile-blob" aria-hidden="true" />
+                <header className="card-tile-head">
+                  <span className={`tile-icon tile-icon-${tone}`}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</span>
+                  <span className="card-tile-meta">{item.author?.display_name ?? "匿名"}・{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
+                </header>
+                <h4 className="card-tile-title">{item.title}</h4>
+                {item.body && <p className="card-tile-body">{item.body}</p>}
+                <button className="pill-primary" style={{ marginTop: 8 }} onClick={() => applyFriendRequest(item.author_id)}>申請する！</button>
+              </article>;
+            })}
+          </section>
+          {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={page <= 1} onClick={() => setOthersPage(page - 1)}>← 前</button><span className="pager-info">{page} / {totalPages}</span><button className="ghost-pill" disabled={page >= totalPages} onClick={() => setOthersPage(page + 1)}>次 →</button></div>}
+        </>;
+      })()}
     </main>}
     {tab === "chat" && <main className="simple-view"><div className="page-title"><MessageCircle /><div><p>リアルタイムで話そう</p><h2>チャット</h2></div></div><div className="empty-panel"><MessageCircle /><h3>会話を始めましょう</h3><p>フレンドまたは参加中のコミュニティからチャットを開始できます。</p></div></main>}
     {tab === "notifications" && <main className="simple-view">
