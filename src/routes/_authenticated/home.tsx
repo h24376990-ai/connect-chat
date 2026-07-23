@@ -36,7 +36,7 @@ function HomePage() {
   async function load() {
     const [profileRes, recruitRes, communityRes, postRes, notificationRes, notifListRes, friendReqRes] = await Promise.all([
       supabase.from("profiles").select("id,display_name,username,avatar_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
-      supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
+      supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(200),
       supabase.from("communities").select("id,name,description,image_url").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(5),
       supabase.from("posts").select("id,body,created_at").order("created_at", { ascending: false }).range(0, 9),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
