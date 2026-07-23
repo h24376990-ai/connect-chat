@@ -96,7 +96,7 @@ function HomePage() {
   const initial = profile?.display_name?.slice(0, 1) ?? "?";
   const tiles: Tile[] = [
     { key: "profile", label: "プロフィール", tone: "cyan", icon: <User />, onClick: () => setTab("profile"), extra: <div className="tile-mini"><span className="tile-mini-avatar">{initial.slice(0, 2)}</span><small>プロフィールを見る</small></div> },
-    { key: "recruit", label: "フレンド募集", tone: "green", icon: <Megaphone />, onClick: () => setModal("recruit") },
+    { key: "recruit", label: "フレンド募集", tone: "green", icon: <Megaphone />, onClick: () => setTab("search") },
     { key: "community", label: "コミュニティ", tone: "purple", icon: <UsersRound />, onClick: () => setModal("community") },
     { key: "friends", label: "フレンド", tone: "pink", icon: <User />, onClick: () => setTab("search") },
     { key: "chat", label: "チャット", tone: "orange", icon: <MessageCircle />, onClick: () => setTab("chat") },
