@@ -302,3 +302,6 @@
   .empty-panel.soft > svg { width: 34px; height: 34px; }
   .empty-panel.soft p { margin: 10px 0 0; font-size: 12px; }
 }
+
+.pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 12px 0 4px; }
+.pager-info { font-size: 13px; color: var(--muted-foreground); font-weight: 600; }
