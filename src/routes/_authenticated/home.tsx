@@ -133,9 +133,6 @@ function HomePage() {
       </section>
     </main>}
     {tab === "search" && <main className="simple-view discover-view">
-      <div className="page-title"><Search /><div><p>つながりを見つける</p><h2>みつける</h2></div></div>
-      <div className="search-box"><Search size={18} /><input placeholder="名前・趣味タグで検索" /></div>
-
       {friendRequests.length > 0 && <>
         <div className="discover-section-head">
           <div><span className="discover-eyebrow">REQUESTS</span><h3>届いたフレンド申請</h3></div>
@@ -144,14 +141,14 @@ function HomePage() {
           {friendRequests.map((req) => {
             const name = req.requester?.display_name ?? "ユーザー";
             const ini = name.slice(0, 1);
-            return <article key={req.id} className="card-tile card-tile-pink">
+            return <article key={req.id} className="card-tile card-tile-pink" onClick={() => navigate({ to: "/u/$userId", params: { userId: req.requester_id } })} style={{ cursor: "pointer" }}>
               <span className="tile-blob" aria-hidden="true" />
               <header className="card-tile-head">
                 <span className="tile-icon tile-icon-pink">{req.requester?.avatar_url ? <img src={req.requester.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : ini}</span>
                 <span className="card-tile-meta">{new Date(req.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
               </header>
               <h4 className="card-tile-title">{name}さんから申請</h4>
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
                 <button className="pill-primary" style={{ flex: 1 }} onClick={() => respondFriendRequest(req.id, true)}>承認</button>
                 <button className="secondary-action" style={{ flex: 1 }} onClick={() => respondFriendRequest(req.id, false)}>拒否</button>
               </div>
@@ -160,67 +157,38 @@ function HomePage() {
         </section>
       </>}
 
-
       <div className="discover-section-head">
-        <div><span className="discover-eyebrow">MINE</span><h3>自分の募集</h3></div>
+        <div><span className="discover-eyebrow">RECRUITS</span><h3>フレンド募集</h3></div>
         <button className="ghost-pill" onClick={() => setModal("recruit")}><CirclePlus size={16} />投稿</button>
       </div>
       {(() => {
-        const mine = recruitments.filter((r) => r.author_id === user.id);
-        if (mine.length === 0) return <div className="empty-panel soft"><Megaphone /><p>まだ自分の募集はありません。</p></div>;
-        const totalPages = Math.max(1, Math.ceil(mine.length / PAGE_SIZE));
-        const page = Math.min(minePage, totalPages);
-        const slice = mine.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+        if (recruitments.length === 0) return <div className="empty-panel soft"><Megaphone /><p>まだ募集はありません。</p></div>;
+        const totalPages = Math.max(1, Math.ceil(recruitments.length / PAGE_SIZE));
+        const cur = Math.min(page, totalPages);
+        const slice = recruitments.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
+        const tones: TileTone[] = ["cyan", "green", "orange", "pink", "purple", "teal", "blue", "magenta"];
         return <>
           <section className="card-tile-grid">
             {slice.map((item, i) => {
-              const tones: TileTone[] = ["cyan", "teal", "blue", "purple"];
               const tone = tones[i % tones.length];
+              const isMine = item.author_id === user.id;
               const authorInitial = (item.author?.display_name ?? "?").slice(0, 1);
-              return <article key={item.id} className={`card-tile card-tile-${tone}`}>
+              const alreadySent = sentRequests.has(item.author_id);
+              return <article key={item.id} className={`card-tile card-tile-${tone}`} onClick={() => !isMine && navigate({ to: "/u/$userId", params: { userId: item.author_id } })} style={{ cursor: isMine ? "default" : "pointer" }}>
                 <span className="tile-blob" aria-hidden="true" />
                 <header className="card-tile-head">
                   <span className={`tile-icon tile-icon-${tone}`}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</span>
-                  <span className="card-tile-meta">{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
+                  <span className="card-tile-meta">{isMine ? "自分" : (item.author?.display_name ?? "匿名")}・{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
                 </header>
                 <h4 className="card-tile-title">{item.title}</h4>
                 {item.body && <p className="card-tile-body">{item.body}</p>}
-                <button className="pill-primary" style={{ marginTop: 8 }} disabled>自分の募集</button>
+                {isMine
+                  ? <button className="pill-primary" style={{ marginTop: 8 }} disabled>自分の募集</button>
+                  : <button className="pill-primary" style={{ marginTop: 8 }} disabled={alreadySent} onClick={(e) => { e.stopPropagation(); applyFriendRequest(item.author_id); }}>{alreadySent ? "申請済み" : "申請する！"}</button>}
               </article>;
             })}
           </section>
-          {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={page <= 1} onClick={() => setMinePage(page - 1)}>← 前</button><span className="pager-info">{page} / {totalPages}</span><button className="ghost-pill" disabled={page >= totalPages} onClick={() => setMinePage(page + 1)}>次 →</button></div>}
-        </>;
-      })()}
-
-      <div className="discover-section-head">
-        <div><span className="discover-eyebrow">FRIENDS</span><h3>みんなの募集</h3></div>
-      </div>
-      {(() => {
-        const others = recruitments.filter((r) => r.author_id !== user.id);
-        if (others.length === 0) return <div className="empty-panel soft"><Megaphone /><p>まだ他のユーザーの募集がありません。</p></div>;
-        const totalPages = Math.max(1, Math.ceil(others.length / PAGE_SIZE));
-        const page = Math.min(othersPage, totalPages);
-        const slice = others.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-        return <>
-          <section className="card-tile-grid">
-            {slice.map((item, i) => {
-              const tones: TileTone[] = ["green", "orange", "pink", "purple", "teal", "magenta"];
-              const tone = tones[i % tones.length];
-              const authorInitial = (item.author?.display_name ?? "?").slice(0, 1);
-              return <article key={item.id} className={`card-tile card-tile-${tone}`}>
-                <span className="tile-blob" aria-hidden="true" />
-                <header className="card-tile-head">
-                  <span className={`tile-icon tile-icon-${tone}`}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</span>
-                  <span className="card-tile-meta">{item.author?.display_name ?? "匿名"}・{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
-                </header>
-                <h4 className="card-tile-title">{item.title}</h4>
-                {item.body && <p className="card-tile-body">{item.body}</p>}
-                <button className="pill-primary" style={{ marginTop: 8 }} onClick={() => applyFriendRequest(item.author_id)}>申請する！</button>
-              </article>;
-            })}
-          </section>
-          {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={page <= 1} onClick={() => setOthersPage(page - 1)}>← 前</button><span className="pager-info">{page} / {totalPages}</span><button className="ghost-pill" disabled={page >= totalPages} onClick={() => setOthersPage(page + 1)}>次 →</button></div>}
+          {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={cur <= 1} onClick={() => setPage(cur - 1)}>← 前</button><span className="pager-info">{cur} / {totalPages}</span><button className="ghost-pill" disabled={cur >= totalPages} onClick={() => setPage(cur + 1)}>次 →</button></div>}
         </>;
       })()}
     </main>}
