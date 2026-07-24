@@ -73,7 +73,7 @@ function ProfileEditPage() {
           <label>年齢
             <select name="age" defaultValue={profile.age ?? ""}>
               <option value="">未設定</option>
-              {Array.from({ length: 83 }, (_, i) => i + 18).map((n) => <option key={n} value={n}>{n}歳</option>)}
+              {Array.from({ length: 200 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}歳</option>)}
             </select>
           </label>
           <label>性別
