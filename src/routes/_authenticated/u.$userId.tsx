@@ -4,23 +4,31 @@ import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileShell } from "@/components/mobile-shell";
 
-type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; bio: string | null; hobby_tags: string[] };
+type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; bio: string | null; hobby_tags: string[]; age: number | null; gender: string | null };
+type Recruitment = { id: string; title: string; body: string | null; created_at: string };
 type FriendshipStatus = "none" | "pending_out" | "pending_in" | "accepted" | "self";
 
 export const Route = createFileRoute("/_authenticated/u/$userId")({ component: UserProfilePage });
+
+const GENDER_LABEL: Record<string, string> = { male: "男性", female: "女性", other: "その他" };
 
 function UserProfilePage() {
   const { userId } = Route.useParams();
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [status, setStatus] = useState<FriendshipStatus>("none");
   const [msg, setMsg] = useState("");
 
   async function load() {
     if (userId === user.id) { setStatus("self"); }
-    const { data } = await supabase.from("profiles").select("id,display_name,username,avatar_url,bio,hobby_tags").eq("id", userId).single();
-    if (data) setProfile(data as Profile);
+    const [profileRes, recruitRes] = await Promise.all([
+      supabase.from("profiles").select("id,display_name,username,avatar_url,bio,hobby_tags,age,gender").eq("id", userId).single(),
+      supabase.from("friend_recruitments").select("id,title,body,created_at").eq("author_id", userId).eq("is_active", true).order("created_at", { ascending: false }).limit(10),
+    ]);
+    if (profileRes.data) setProfile(profileRes.data as Profile);
+    setRecruitments((recruitRes.data ?? []) as Recruitment[]);
     if (userId !== user.id) {
       const { data: f } = await supabase.from("friendships").select("requester_id,addressee_id,status").or(`and(requester_id.eq.${user.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${user.id})`).maybeSingle();
       if (!f) setStatus("none");
@@ -52,9 +60,24 @@ function UserProfilePage() {
           <div className="large-avatar">{profile.avatar_url ? <img src={profile.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : initial}</div>
           <h2>{profile.display_name}</h2>
           <p>@{profile.username}</p>
-          {profile.bio && <p style={{ marginTop: 8 }}>{profile.bio}</p>}
+          <div className="tag-row" style={{ marginTop: 8 }}>
+            {profile.age != null && <span>{profile.age}歳</span>}
+            {profile.gender && <span>{GENDER_LABEL[profile.gender] ?? profile.gender}</span>}
+          </div>
+          {profile.bio && <p style={{ marginTop: 10 }}>{profile.bio}</p>}
           <div className="tag-row">{profile.hobby_tags?.map((t) => <span key={t}>#{t}</span>)}</div>
         </div>
+
+        {recruitments.length > 0 && <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="discover-section-head"><div><span className="discover-eyebrow">RECRUITS</span><h3>募集中のひとこと</h3></div></div>
+          {recruitments.map((r) => <article key={r.id} className="card-tile card-tile-green">
+            <span className="tile-blob" aria-hidden="true" />
+            <h4 className="card-tile-title">{r.title}</h4>
+            {r.body && <p className="card-tile-body">{r.body}</p>}
+            <span className="card-tile-meta" style={{ marginTop: 6, display: "block" }}>{new Date(r.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
+          </article>)}
+        </section>}
+
         {status === "none" && <button className="pill-primary" onClick={apply}>申請する！</button>}
         {status === "pending_out" && <button className="pill-primary" disabled>申請済み</button>}
         {status === "pending_in" && <button className="pill-primary" disabled>相手から申請中</button>}
