@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedUUserIdRouteImport } from './routes/_authenticated/u.$userId'
 import { Route as AuthenticatedProfileEditRouteImport } from './routes/_authenticated/profile.edit'
+import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -52,12 +53,19 @@ const AuthenticatedProfileEditRoute =
     path: '/profile/edit',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedChatConversationIdRoute =
+  AuthenticatedChatConversationIdRouteImport.update({
+    id: '/chat/$conversationId',
+    path: '/chat/$conversationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/profile/edit': typeof AuthenticatedProfileEditRoute
   '/u/$userId': typeof AuthenticatedUUserIdRoute
 }
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/profile/edit': typeof AuthenticatedProfileEditRoute
   '/u/$userId': typeof AuthenticatedUUserIdRoute
 }
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/profile/edit': typeof AuthenticatedProfileEditRoute
   '/_authenticated/u/$userId': typeof AuthenticatedUUserIdRoute
 }
@@ -86,10 +96,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/home'
+    | '/chat/$conversationId'
     | '/profile/edit'
     | '/u/$userId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/sitemap.xml' | '/home' | '/profile/edit' | '/u/$userId'
+  to:
+    | '/'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/home'
+    | '/chat/$conversationId'
+    | '/profile/edit'
+    | '/u/$userId'
   id:
     | '__root__'
     | '/'
@@ -97,6 +115,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/_authenticated/home'
+    | '/_authenticated/chat/$conversationId'
     | '/_authenticated/profile/edit'
     | '/_authenticated/u/$userId'
   fileRoutesById: FileRoutesById
@@ -159,17 +178,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileEditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chat/$conversationId': {
+      id: '/_authenticated/chat/$conversationId'
+      path: '/chat/$conversationId'
+      fullPath: '/chat/$conversationId'
+      preLoaderRoute: typeof AuthenticatedChatConversationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRoute
   AuthenticatedProfileEditRoute: typeof AuthenticatedProfileEditRoute
   AuthenticatedUUserIdRoute: typeof AuthenticatedUUserIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedChatConversationIdRoute: AuthenticatedChatConversationIdRoute,
   AuthenticatedProfileEditRoute: AuthenticatedProfileEditRoute,
   AuthenticatedUUserIdRoute: AuthenticatedUUserIdRoute,
 }
@@ -186,13 +214,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
