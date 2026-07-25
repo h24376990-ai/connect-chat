@@ -594,6 +594,10 @@ export type Database = {
         Args: { _community_id: string }
         Returns: undefined
       }
+      get_or_create_direct_conversation: {
+        Args: { _other: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
