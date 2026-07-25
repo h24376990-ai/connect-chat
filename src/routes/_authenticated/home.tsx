@@ -3,13 +3,15 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, Settings, User, UsersRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileShell } from "@/components/mobile-shell";
+import { ProfileDetailModal } from "@/components/profile-detail-modal";
 
-type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; bio: string | null; hobby_tags: string[]; theme_color: string };
-type Recruitment = { id: string; author_id: string; title: string; body: string | null; created_at: string; author?: { display_name: string; avatar_url: string | null } | null };
+type AuthorInfo = { id: string; display_name: string; avatar_url: string | null; background_url: string | null; bio: string | null; age: number | null; gender: string | null; hobby_tags: string[]; username: string };
+type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; background_url: string | null; bio: string | null; hobby_tags: string[]; theme_color: string };
+type Recruitment = { id: string; author_id: string; title: string; body: string | null; created_at: string; author?: AuthorInfo | null };
 type Community = { id: string; name: string; description: string | null; image_url: string | null };
-type Post = { id: string; body: string | null; created_at: string };
 type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null };
-type FriendRequest = { id: string; requester_id: string; created_at: string; requester?: { display_name: string; avatar_url: string | null } | null };
+type FriendRequest = { id: string; requester_id: string; created_at: string; requester?: AuthorInfo | null };
+type Friend = { user_id: string; display_name: string; avatar_url: string | null };
 
 export const Route = createFileRoute("/_authenticated/home")({ component: HomePage });
 
@@ -22,45 +24,47 @@ function HomePage() {
   const [tab, setTab] = useState<"home" | "search" | "chat" | "notifications" | "profile">("home");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
-  const [communities, setCommunities] = useState<Community[]>([]);
-  const [posts, setPosts] = useState<Post[]>([]);
   const [unread, setUnread] = useState(0);
   const [modal, setModal] = useState<"recruit" | "community" | "post" | null>(null);
   const [status, setStatus] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [detailProfile, setDetailProfile] = useState<AuthorInfo | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
   async function load() {
-    const [profileRes, recruitRes, communityRes, postRes, notificationRes, notifListRes, friendReqRes, sentRes] = await Promise.all([
-      supabase.from("profiles").select("id,display_name,username,avatar_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
+    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, friendListRes] = await Promise.all([
+      supabase.from("profiles").select("id,display_name,username,avatar_url,background_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
       supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(200),
-      supabase.from("communities").select("id,name,description,image_url").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(5),
-      supabase.from("posts").select("id,body,created_at").order("created_at", { ascending: false }).range(0, 9),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
       supabase.from("notifications").select("id,title,body,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
-      supabase.from("friendships").select("id,requester_id,created_at").eq("addressee_id", user.id).eq("status", "pending").order("created_at", { ascending: false }),
-      supabase.from("friendships").select("addressee_id,requester_id,status").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
+      supabase.from("friendships").select("id,requester_id,addressee_id,status,created_at").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
+      Promise.resolve(null),
     ]);
     if (profileRes.data) setProfile(profileRes.data as Profile);
     const recruits = (recruitRes.data ?? []) as Recruitment[];
-    const requests = (friendReqRes.data ?? []) as FriendRequest[];
-    const authorIds = Array.from(new Set([...recruits.map((r) => r.author_id), ...requests.map((r) => r.requester_id)]));
+    const allFriendships = (friendReqRes.data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string; created_at: string }>;
+    const pending = allFriendships.filter((f) => f.status === "pending" && f.addressee_id === user.id).map((f) => ({ id: f.id, requester_id: f.requester_id, created_at: f.created_at }));
+    const accepted = allFriendships.filter((f) => f.status === "accepted").map((f) => f.requester_id === user.id ? f.addressee_id : f.requester_id);
+    const authorIds = Array.from(new Set([...recruits.map((r) => r.author_id), ...pending.map((r) => r.requester_id), ...accepted]));
+    let authorMap = new Map<string, AuthorInfo>();
     if (authorIds.length) {
-      const { data: authors } = await supabase.from("profiles").select("id,display_name,avatar_url").in("id", authorIds);
-      const map = new Map((authors ?? []).map((a) => [a.id, a]));
-      recruits.forEach((r) => { const a = map.get(r.author_id); r.author = a ? { display_name: a.display_name, avatar_url: a.avatar_url } : null; });
-      requests.forEach((r) => { const a = map.get(r.requester_id); r.requester = a ? { display_name: a.display_name, avatar_url: a.avatar_url } : null; });
+      const { data: authors } = await supabase.from("profiles").select("id,username,display_name,avatar_url,background_url,bio,hobby_tags,age,gender").in("id", authorIds);
+      authorMap = new Map((authors ?? []).map((a) => [a.id, a as AuthorInfo]));
     }
-    setRecruitments(recruits); setCommunities((communityRes.data ?? []) as Community[]); setPosts((postRes.data ?? []) as Post[]); setUnread(notificationRes.count ?? 0);
-    setNotifications((notifListRes.data ?? []) as Notification[]); setFriendRequests(requests);
+    recruits.forEach((r) => { r.author = authorMap.get(r.author_id) ?? null; });
+    const reqs: FriendRequest[] = pending.map((p) => ({ ...p, requester: authorMap.get(p.requester_id) ?? null }));
+    const fs: Friend[] = accepted.map((id) => { const a = authorMap.get(id); return { user_id: id, display_name: a?.display_name ?? "フレンド", avatar_url: a?.avatar_url ?? null }; });
+    setRecruitments(recruits);
+    setUnread(notificationRes.count ?? 0);
+    setNotifications((notifListRes.data ?? []) as Notification[]);
+    setFriendRequests(reqs);
+    setFriends(fs);
     const sent = new Set<string>();
-    ((sentRes.data ?? []) as Array<{ addressee_id: string; requester_id: string; status: string }>).forEach((f) => {
-      const other = f.requester_id === user.id ? f.addressee_id : f.requester_id;
-      if (f.status === "pending" || f.status === "accepted") sent.add(other);
-    });
+    allFriendships.forEach((f) => { const other = f.requester_id === user.id ? f.addressee_id : f.requester_id; if (f.status === "pending" || f.status === "accepted") sent.add(other); });
     setSentRequests(sent);
   }
 
@@ -98,6 +102,12 @@ function HomePage() {
   async function submitPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const f = new FormData(event.currentTarget); const { error } = await supabase.from("posts").insert({ author_id: user.id, body: String(f.get("body")) });
     if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
+  }
+
+  async function startDirectChat(otherId: string) {
+    const { data, error } = await supabase.rpc("get_or_create_direct_conversation", { _other: otherId });
+    if (error) { setStatus(error.message); return; }
+    if (data) navigate({ to: "/chat/$conversationId", params: { conversationId: String(data) } });
   }
 
   const initial = profile?.display_name?.slice(0, 1) ?? "?";
@@ -144,7 +154,7 @@ function HomePage() {
             return <article key={req.id} className="card-tile card-tile-pink" onClick={() => navigate({ to: "/u/$userId", params: { userId: req.requester_id } })} style={{ cursor: "pointer" }}>
               <span className="tile-blob" aria-hidden="true" />
               <header className="card-tile-head">
-                <span className="tile-icon tile-icon-pink">{req.requester?.avatar_url ? <img src={req.requester.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : ini}</span>
+                <button type="button" className="tile-icon tile-icon-pink" onClick={(e) => { e.stopPropagation(); if (req.requester) setDetailProfile(req.requester); }} style={{ border: "none", padding: 0, cursor: "pointer" }}>{req.requester?.avatar_url ? <img src={req.requester.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : ini}</button>
                 <span className="card-tile-meta">{new Date(req.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
               </header>
               <h4 className="card-tile-title">{name}さんから申請</h4>
@@ -177,7 +187,7 @@ function HomePage() {
               return <article key={item.id} className={`card-tile card-tile-${tone}`} onClick={() => !isMine && navigate({ to: "/u/$userId", params: { userId: item.author_id } })} style={{ cursor: isMine ? "default" : "pointer" }}>
                 <span className="tile-blob" aria-hidden="true" />
                 <header className="card-tile-head">
-                  <span className={`tile-icon tile-icon-${tone}`}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</span>
+                  <button type="button" className={`tile-icon tile-icon-${tone}`} onClick={(e) => { e.stopPropagation(); if (item.author) setDetailProfile(item.author); }} style={{ border: "none", padding: 0, cursor: "pointer" }}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</button>
                   <span className="card-tile-meta">{isMine ? "自分" : (item.author?.display_name ?? "匿名")}・{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
                 </header>
                 <h4 className="card-tile-title">{item.title}</h4>
@@ -192,7 +202,20 @@ function HomePage() {
         </>;
       })()}
     </main>}
-    {tab === "chat" && <main className="simple-view"><div className="page-title"><MessageCircle /><div><p>リアルタイムで話そう</p><h2>チャット</h2></div></div><div className="empty-panel"><MessageCircle /><h3>会話を始めましょう</h3><p>フレンドまたは参加中のコミュニティからチャットを開始できます。</p></div></main>}
+    {tab === "chat" && <main className="simple-view">
+      <div className="page-title"><MessageCircle /><div><p>リアルタイムで話そう</p><h2>チャット</h2></div></div>
+      {friends.length === 0
+        ? <div className="empty-panel"><MessageCircle /><h3>会話を始めましょう</h3><p>フレンドになるとチャットができます。</p></div>
+        : <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {friends.map((f) => (
+            <button key={f.user_id} className="friend-row" onClick={() => startDirectChat(f.user_id)}>
+              <span className="friend-avatar">{f.avatar_url ? <img src={f.avatar_url} alt="" /> : (f.display_name.slice(0, 1))}</span>
+              <span className="friend-name">{f.display_name}</span>
+              <MessageCircle size={18} />
+            </button>
+          ))}
+        </section>}
+    </main>}
     {tab === "notifications" && <main className="simple-view">
       <div className="page-title"><Bell /><div><p>あなたへのお知らせ</p><h2>通知</h2></div></div>
       {unread > 0 && <button className="ghost-pill" onClick={markNotificationsRead} style={{ alignSelf: "flex-end" }}>すべて既読</button>}
@@ -206,7 +229,16 @@ function HomePage() {
         </section>
       }
     </main>}
-    {tab === "profile" && <main className="simple-view"><div className="profile-hero"><div className="large-avatar">{initial}</div><h2>{profile?.display_name}</h2><p>@{profile?.username}</p><div className="tag-row">{profile?.hobby_tags.map((t) => <span key={t}>#{t}</span>)}</div></div><button className="settings-row" onClick={() => navigate({ to: "/profile/edit" })}><Palette />プロフィール・テーマを編集<ChevronRight /></button><button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button></main>}
+    {tab === "profile" && <main className="simple-view">
+      <div className="profile-hero" style={profile?.background_url ? { background: `center/cover url(${profile.background_url})` } : undefined}>
+        <div className="large-avatar">{profile?.avatar_url ? <img src={profile.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : initial}</div>
+        <h2>{profile?.display_name}</h2><p>@{profile?.username}</p>
+        <div className="tag-row">{profile?.hobby_tags.map((t) => <span key={t}>#{t}</span>)}</div>
+      </div>
+      <button className="settings-row" onClick={() => navigate({ to: "/profile/edit" })}><Palette />プロフィール・テーマを編集<ChevronRight /></button>
+      <button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button>
+    </main>}
     {modal && <div className="modal-backdrop" onMouseDown={() => setModal(null)}><section className="modal-sheet" onMouseDown={(e) => e.stopPropagation()}><div className="sheet-handle" /><h2>{modal === "recruit" ? "フレンド募集を投稿" : modal === "community" ? "コミュニティを作成" : "タイムラインへ投稿"}</h2>{modal === "recruit" && <form onSubmit={submitRecruitment}><label>募集タイトル<input name="title" required maxLength={80} placeholder="ゲーム仲間募集！" /></label><label>ひとこと（空白可）<textarea name="body" maxLength={1000} placeholder="よろしくね" /></label><button className="pill-primary">募集を投稿</button></form>}{modal === "community" && <form onSubmit={submitCommunity}><label>コミュニティ名<input name="name" required maxLength={60} /></label><label>説明<textarea name="description" maxLength={1000} /></label><p className="form-hint">作成後、あなたは自動的にオーナー兼管理者として参加します。</p><button className="pill-primary">作成して参加</button></form>}{modal === "post" && <form onSubmit={submitPost}><label>投稿内容<textarea name="body" required maxLength={2000} placeholder="今なにしてる？" /></label><button className="pill-primary">投稿する</button></form>}{status && <p className="form-notice">{status}</p>}<button className="secondary-action" onClick={() => setModal(null)}>キャンセル</button></section></div>}
+    {detailProfile && <ProfileDetailModal profile={detailProfile} onClose={() => setDetailProfile(null)} />}
   </MobileShell>;
 }
