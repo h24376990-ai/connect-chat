@@ -19,6 +19,7 @@ import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedUUserIdRouteImport } from './routes/_authenticated/u.$userId'
 import { Route as AuthenticatedProfileEditRouteImport } from './routes/_authenticated/profile.edit'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
+import { Route as AuthenticatedCallConversationIdRouteImport } from './routes/_authenticated/call.$conversationId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -71,6 +72,12 @@ const AuthenticatedChatConversationIdRoute =
     path: '/chat/$conversationId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCallConversationIdRoute =
+  AuthenticatedCallConversationIdRouteImport.update({
+    id: '/call/$conversationId',
+    path: '/call/$conversationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/call/$conversationId': typeof AuthenticatedCallConversationIdRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/profile/edit': typeof AuthenticatedProfileEditRoute
   '/u/$userId': typeof AuthenticatedUUserIdRoute
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
+  '/call/$conversationId': typeof AuthenticatedCallConversationIdRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/profile/edit': typeof AuthenticatedProfileEditRoute
   '/u/$userId': typeof AuthenticatedUUserIdRoute
@@ -103,6 +112,7 @@ export interface FileRoutesById {
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/_authenticated/call/$conversationId': typeof AuthenticatedCallConversationIdRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/profile/edit': typeof AuthenticatedProfileEditRoute
   '/_authenticated/u/$userId': typeof AuthenticatedUUserIdRoute
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/admin/login'
     | '/admin/'
+    | '/call/$conversationId'
     | '/chat/$conversationId'
     | '/profile/edit'
     | '/u/$userId'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/admin/login'
     | '/admin'
+    | '/call/$conversationId'
     | '/chat/$conversationId'
     | '/profile/edit'
     | '/u/$userId'
@@ -139,6 +151,7 @@ export interface FileRouteTypes {
     | '/_authenticated/home'
     | '/admin/login'
     | '/admin/'
+    | '/_authenticated/call/$conversationId'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/profile/edit'
     | '/_authenticated/u/$userId'
@@ -225,11 +238,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatConversationIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/call/$conversationId': {
+      id: '/_authenticated/call/$conversationId'
+      path: '/call/$conversationId'
+      fullPath: '/call/$conversationId'
+      preLoaderRoute: typeof AuthenticatedCallConversationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedCallConversationIdRoute: typeof AuthenticatedCallConversationIdRoute
   AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRoute
   AuthenticatedProfileEditRoute: typeof AuthenticatedProfileEditRoute
   AuthenticatedUUserIdRoute: typeof AuthenticatedUUserIdRoute
@@ -237,6 +258,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedCallConversationIdRoute: AuthenticatedCallConversationIdRoute,
   AuthenticatedChatConversationIdRoute: AuthenticatedChatConversationIdRoute,
   AuthenticatedProfileEditRoute: AuthenticatedProfileEditRoute,
   AuthenticatedUUserIdRoute: AuthenticatedUUserIdRoute,
