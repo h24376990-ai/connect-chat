@@ -1,8 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Image as ImageIcon, Send, Video } from "lucide-react";
+import { ChevronLeft, Image as ImageIcon, Phone, Send, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { MobileShell } from "@/components/mobile-shell";
 import { uploadUserMedia } from "@/lib/media";
 
 type Message = { id: string; sender_id: string; kind: "text" | "image" | "video" | "audio" | "file"; body: string | null; media_url: string | null; created_at: string };
@@ -21,12 +20,15 @@ function ChatPage() {
   const [members, setMembers] = useState<Map<string, Member>>(new Map());
   const [status, setStatus] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [sending, setSending] = useState(false);
   const imgInput = useRef<HTMLInputElement>(null);
   const vidInput = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   async function load() {
-    const { data } = await supabase.from("messages").select("id,sender_id,kind,body,media_url,created_at").eq("conversation_id", conversationId).order("created_at").limit(500);
+    const { data, error } = await supabase.from("messages").select("id,sender_id,kind,body,media_url,created_at").eq("conversation_id", conversationId).order("created_at").limit(500);
+    if (error) { setStatus(error.message); return; }
     const msgs = (data ?? []) as Message[];
     setMessages(msgs);
     const senderIds = Array.from(new Set(msgs.map((m) => m.sender_id)));
@@ -48,12 +50,21 @@ function ChatPage() {
 
   async function sendText(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = e.currentTarget;
-    const input = form.elements.namedItem("body") as HTMLInputElement;
-    const body = input.value.trim(); if (!body) return;
-    input.value = "";
+    if (sending) return;
+    const input = inputRef.current;
+    if (!input) return;
+    const body = input.value.trim();
+    if (!body) return;
+    setSending(true);
+    setStatus("");
     const { error } = await supabase.from("messages").insert({ conversation_id: conversationId, sender_id: user.id, kind: "text", body });
-    if (error) setStatus(error.message);
+    if (error) {
+      setStatus(`送信失敗: ${error.message}`);
+    } else {
+      input.value = "";
+    }
+    setSending(false);
+    input.focus();
   }
 
   async function sendMedia(kind: "image" | "video", file?: File | null) {
@@ -70,11 +81,11 @@ function ChatPage() {
     finally { setUploading(false); }
   }
 
-  return <MobileShell active="chat" onChange={() => navigate({ to: "/home" })} unread={0}>
-    <header className="home-header">
+  return <div className="chat-page">
+    <header className="chat-header">
       <button className="round-btn" aria-label="戻る" onClick={() => navigate({ to: "/home" })}><ChevronLeft size={18} /></button>
-      <h1 className="home-hello">チャット</h1>
-      <div />
+      <h1 className="home-hello" style={{ fontSize: 18 }}>チャット</h1>
+      <button className="round-btn" aria-label="通話" onClick={() => navigate({ to: "/call/$conversationId", params: { conversationId } })}><Phone size={18} /></button>
     </header>
     <main className="chat-view" ref={scrollRef}>
       {messages.length === 0 && <div className="empty-panel soft"><p>まだメッセージはありません。</p></div>}
@@ -92,14 +103,14 @@ function ChatPage() {
         </div>;
       })}
     </main>
-    {status && <p className="form-notice" style={{ padding: "0 16px" }}>{status}</p>}
+    {status && <p className="form-notice chat-status">{status}</p>}
     <form className="chat-composer" onSubmit={sendText}>
-      <button type="button" className="round-btn" aria-label="画像" disabled={uploading} onClick={() => imgInput.current?.click()}><ImageIcon size={18} /></button>
-      <button type="button" className="round-btn" aria-label="動画" disabled={uploading} onClick={() => vidInput.current?.click()}><Video size={18} /></button>
+      <button type="button" className="round-btn" aria-label="画像" disabled={uploading || sending} onClick={() => imgInput.current?.click()}><ImageIcon size={18} /></button>
+      <button type="button" className="round-btn" aria-label="動画" disabled={uploading || sending} onClick={() => vidInput.current?.click()}><Video size={18} /></button>
       <input ref={imgInput} type="file" accept="image/*" hidden onChange={(e) => sendMedia("image", e.target.files?.[0])} />
       <input ref={vidInput} type="file" accept="video/*" hidden onChange={(e) => sendMedia("video", e.target.files?.[0])} />
-      <input name="body" placeholder="メッセージを入力…" maxLength={2000} autoComplete="off" />
-      <button className="pill-primary" type="submit" aria-label="送信"><Send size={16} /></button>
+      <input ref={inputRef} name="body" placeholder="メッセージを入力…" maxLength={2000} autoComplete="off" disabled={sending} />
+      <button className="pill-primary" type="submit" aria-label="送信" disabled={sending}><Send size={16} /></button>
     </form>
-  </MobileShell>;
+  </div>;
 }
