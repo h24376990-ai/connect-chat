@@ -605,9 +605,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_conversation_member: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
       remove_community_member: {
         Args: { _community_id: string; _user_id: string }
         Returns: undefined
+      }
+      request_community_membership: {
+        Args: { _community_id: string }
+        Returns: Database["public"]["Enums"]["membership_status"]
       }
       send_friend_request: { Args: { _addressee: string }; Returns: undefined }
       transfer_community_owner: {
