@@ -38,6 +38,15 @@ function ChatPage() {
     }
   }
 
+  async function verifyMembership() {
+    const { data, error } = await supabase.from("conversation_members").select("conversation_id").eq("conversation_id", conversationId).eq("user_id", user.id).maybeSingle();
+    if (error || !data) {
+      setStatus(error?.message ?? "この会話に参加できません");
+      return false;
+    }
+    return true;
+  }
+
   useEffect(() => {
     load();
     const ch = supabase.channel(`conv-${conversationId}`).on("postgres_changes",
@@ -57,6 +66,7 @@ function ChatPage() {
     if (!body) return;
     setSending(true);
     setStatus("");
+    if (!(await verifyMembership())) { setSending(false); return; }
     const { error } = await supabase.from("messages").insert({ conversation_id: conversationId, sender_id: user.id, kind: "text", body });
     if (error) {
       setStatus(`送信失敗: ${error.message}`);
@@ -73,6 +83,7 @@ function ChatPage() {
     if (kind === "video" && file.size > MAX_VIDEO) return setStatus("動画は50MB以下にしてください");
     setUploading(true); setStatus("送信中…");
     try {
+      if (!(await verifyMembership())) return;
       const url = await uploadUserMedia(user.id, `chat/${conversationId}`, file);
       const { error } = await supabase.from("messages").insert({ conversation_id: conversationId, sender_id: user.id, kind, media_url: url });
       if (error) throw error;

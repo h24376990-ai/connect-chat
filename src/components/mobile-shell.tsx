@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Bell, Home, MessageCircle, Search, UserRound } from "lucide-react";
 
-type Tab = "home" | "search" | "chat" | "notifications" | "profile";
+type Tab = "home" | "search" | "community" | "chat" | "notifications" | "profile";
 export function MobileShell({ children, active, onChange, unread = 0 }: { children: ReactNode; active: Tab; onChange: (tab: Tab) => void; unread?: number }) {
   const items: { id: Tab; label: string; icon: typeof Home }[] = [
     { id: "home", label: "ホーム", icon: Home }, { id: "search", label: "フレンド", icon: Search },
