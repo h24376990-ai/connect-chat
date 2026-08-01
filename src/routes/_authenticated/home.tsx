@@ -8,7 +8,8 @@ import { ProfileDetailModal } from "@/components/profile-detail-modal";
 type AuthorInfo = { id: string; display_name: string; avatar_url: string | null; background_url: string | null; bio: string | null; age: number | null; gender: string | null; hobby_tags: string[]; username: string };
 type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; background_url: string | null; bio: string | null; hobby_tags: string[]; theme_color: string };
 type Recruitment = { id: string; author_id: string; title: string; body: string | null; created_at: string; author?: AuthorInfo | null };
-type Community = { id: string; name: string; description: string | null; image_url: string | null };
+type Community = { id: string; owner_id: string; name: string; description: string | null; image_url: string | null; created_at: string };
+type CommunityMembership = { community_id: string; status: "pending" | "approved" | "rejected" };
 type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null };
 type FriendRequest = { id: string; requester_id: string; created_at: string; requester?: AuthorInfo | null };
 type Friend = { user_id: string; display_name: string; avatar_url: string | null };
@@ -21,7 +22,7 @@ type Tile = { key: string; label: string; tone: TileTone; icon: React.ReactNode;
 function HomePage() {
   const navigate = useNavigate();
   const { user } = Route.useRouteContext();
-  const [tab, setTab] = useState<"home" | "search" | "chat" | "notifications" | "profile">("home");
+  const [tab, setTab] = useState<"home" | "search" | "community" | "chat" | "notifications" | "profile">("home");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [unread, setUnread] = useState(0);
@@ -31,18 +32,21 @@ function HomePage() {
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [communityMemberships, setCommunityMemberships] = useState<Map<string, CommunityMembership["status"]>>(new Map());
   const [detailProfile, setDetailProfile] = useState<AuthorInfo | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
   async function load() {
-    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, friendListRes] = await Promise.all([
+    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes] = await Promise.all([
       supabase.from("profiles").select("id,display_name,username,avatar_url,background_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
       supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(200),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
       supabase.from("notifications").select("id,title,body,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
       supabase.from("friendships").select("id,requester_id,addressee_id,status,created_at").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
-      Promise.resolve(null),
+      supabase.from("communities").select("id,owner_id,name,description,image_url,created_at").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(100),
+      supabase.from("community_members").select("community_id,status").eq("user_id", user.id),
     ]);
     if (profileRes.data) setProfile(profileRes.data as Profile);
     const recruits = (recruitRes.data ?? []) as Recruitment[];
@@ -63,6 +67,8 @@ function HomePage() {
     setNotifications((notifListRes.data ?? []) as Notification[]);
     setFriendRequests(reqs);
     setFriends(fs);
+    setCommunities((communityRes.data ?? []) as Community[]);
+    setCommunityMemberships(new Map(((membershipRes.data ?? []) as CommunityMembership[]).map((m) => [m.community_id, m.status])));
     const sent = new Set<string>();
     allFriendships.forEach((f) => { const other = f.requester_id === user.id ? f.addressee_id : f.requester_id; if (f.status === "pending" || f.status === "accepted") sent.add(other); });
     setSentRequests(sent);
@@ -99,6 +105,14 @@ function HomePage() {
     const { error } = await supabase.rpc("create_community", { _name: String(f.get("name")), _description: String(f.get("description")) || undefined, _image_url: undefined });
     if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
   }
+  async function applyCommunity(communityId: string) {
+    setStatus("申請中…");
+    const { error } = await supabase.rpc("request_community_membership", { _community_id: communityId });
+    if (error) { setStatus(error.message); return; }
+    setStatus("コミュニティ参加申請を送りました");
+    await load();
+    setTimeout(() => setStatus(""), 2000);
+  }
   async function submitPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const f = new FormData(event.currentTarget); const { error } = await supabase.from("posts").insert({ author_id: user.id, body: String(f.get("body")) });
     if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
@@ -114,7 +128,7 @@ function HomePage() {
   const tiles: Tile[] = [
     { key: "profile", label: "プロフィール", tone: "cyan", icon: <User />, onClick: () => setTab("profile"), extra: <div className="tile-mini"><span className="tile-mini-avatar">{initial.slice(0, 2)}</span><small>プロフィールを見る</small></div> },
     { key: "recruit", label: "フレンド募集", tone: "green", icon: <Megaphone />, onClick: () => setTab("search") },
-    { key: "community", label: "コミュニティ", tone: "purple", icon: <UsersRound />, onClick: () => setModal("community") },
+    { key: "community", label: "コミュニティ", tone: "purple", icon: <UsersRound />, onClick: () => setTab("community") },
     { key: "friends", label: "フレンド", tone: "pink", icon: <User />, onClick: () => setTab("search") },
     { key: "chat", label: "チャット", tone: "orange", icon: <MessageCircle />, onClick: () => setTab("chat") },
     { key: "cchat", label: "コミュニティチャット", tone: "blue", icon: <MessagesSquare />, onClick: () => setTab("chat") },
@@ -141,6 +155,27 @@ function HomePage() {
           </button>
         ))}
       </section>
+    </main>}
+    {tab === "community" && <main className="simple-view discover-view">
+      <div className="discover-section-head">
+        <div><span className="discover-eyebrow">COMMUNITIES</span><h2>コミュニティ</h2></div>
+        <button className="ghost-pill" onClick={() => setModal("community")}><CirclePlus size={16} />作成</button>
+      </div>
+      {status && <p className="form-notice">{status}</p>}
+      {communities.length === 0
+        ? <div className="empty-panel soft"><UsersRound /><p>まだコミュニティはありません。</p></div>
+        : <section className="community-card-list">
+          {communities.map((community, index) => {
+            const membership = communityMemberships.get(community.id);
+            const isOwner = community.owner_id === user.id;
+            const label = isOwner || membership === "approved" ? "参加済み" : membership === "pending" ? "申請済み" : "参加申請する";
+            return <article key={community.id} className={`community-card card-tile-${(["purple", "cyan", "green", "orange"] as const)[index % 4]}`}>
+              <div className="community-card-icon">{community.image_url ? <img src={community.image_url} alt="" /> : <UsersRound size={24} />}</div>
+              <div className="community-card-copy"><h3>{community.name}</h3><p>{community.description || "一緒に交流するメンバーを募集中です。"}</p></div>
+              <button className="pill-primary community-apply" disabled={isOwner || membership === "approved" || membership === "pending"} onClick={() => applyCommunity(community.id)}>{label}</button>
+            </article>;
+          })}
+        </section>}
     </main>}
     {tab === "search" && <main className="simple-view discover-view">
       {friendRequests.length > 0 && <>
