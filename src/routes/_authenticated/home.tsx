@@ -87,6 +87,25 @@ function HomePage() {
 
   useEffect(() => { load(); const channel = supabase.channel(`home-${user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, load).subscribe(); return () => { supabase.removeChannel(channel); }; }, [user.id]);
 
+  // Keep lists fresh when switching tabs or returning to the app.
+  useEffect(() => { load(); }, [tab]);
+  useEffect(() => {
+    const onFocus = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", onFocus);
+    return () => document.removeEventListener("visibilitychange", onFocus);
+  }, [user.id]);
+
+  // Online presence: mark online while the app is open, offline on leave.
+  useEffect(() => {
+    const setOnline = (online: boolean) => supabase.from("profiles").update({ is_online: online, last_seen_at: new Date().toISOString() }).eq("id", user.id);
+    setOnline(true);
+    const beat = setInterval(() => setOnline(true), 60000);
+    const onHide = () => { if (document.visibilityState === "hidden") setOnline(false); else setOnline(true); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", () => { setOnline(false); });
+    return () => { clearInterval(beat); document.removeEventListener("visibilitychange", onHide); setOnline(false); };
+  }, [user.id]);
+
   async function submitRecruitment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setStatus("保存中…"); const f = new FormData(event.currentTarget);
     const body = String(f.get("body") ?? "").trim();
