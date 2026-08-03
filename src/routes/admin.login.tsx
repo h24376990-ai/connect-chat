@@ -26,7 +26,7 @@ function AdminLoginPage() {
   return <div className="auth-screen">
     <div className="auth-card">
       <div className="auth-brand"><span className="auth-brand-icon"><ShieldCheck /></span><h1>管理者ログイン</h1><p>指定メールアドレスと初回設定パスワードでログインしてください</p></div>
-      <form onSubmit={onSubmit} className="auth-form">
+      <form onSubmit={onSubmit} method="post" className="auth-form">
         <label>メールアドレス<input name="email" type="email" required autoComplete="username" placeholder="ht110111@icloud.com" /></label>
         <label>パスワード<input name="password" type="password" required minLength={6} maxLength={128} autoComplete="current-password" /></label>
         <button className="pill-primary" disabled={busy}>ログイン</button>

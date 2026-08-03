@@ -364,8 +364,9 @@
 
 /* Admin */
 .admin-wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px; font-family: inherit; color: #0E4A48; }
-.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.admin-header h1 { font-size: 20px; margin: 0; }
+.admin-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.admin-header h1 { font-size: 20px; margin: 0; white-space: nowrap; }
+.admin-header .secondary-action { margin-top: 0; width: auto; flex: 0 0 auto; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .admin-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .admin-tabs button { padding: 8px 14px; border: 1px solid #DDECE8; background: #fff; border-radius: 999px; cursor: pointer; font-size: 13px; }
 .admin-tabs button.active { background: var(--color-primary, #25B7A5); color: #fff; border-color: var(--color-primary, #25B7A5); }
