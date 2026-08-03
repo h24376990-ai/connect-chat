@@ -49,7 +49,7 @@ function AuthPage() {
           <button type="button" className={mode === "login" ? "on" : ""} onClick={() => setMode("login")}>ログイン</button>
           <button type="button" className={mode === "signup" ? "on" : ""} onClick={() => setMode("signup")}>新規登録</button>
         </div>
-        <form onSubmit={submit} className="auth-form">
+        <form onSubmit={submit} method="post" className="auth-form">
           {mode === "signup" && (
             <div className="pill-field"><User size={18} /><input name="displayName" required maxLength={50} placeholder="お名前（表示名）" /></div>
           )}
