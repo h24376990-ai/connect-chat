@@ -9,7 +9,7 @@ type Profile = {
   hobby_tags: string[]; theme_color: string; age: number | null; gender: string | null;
 };
 
-const THEME_COLORS = ["#25B7A5", "#7CC77A", "#B47CE0", "#F09EBB", "#F0A85C", "#5C9CF0", "#4FC3B5", "#E27ABE"];
+
 
 export function ProfileEditor({ userId, onSaved }: { userId: string; onSaved?: () => void }) {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -98,15 +98,6 @@ export function ProfileEditor({ userId, onSaved }: { userId: string; onSaved?: (
         </select>
       </label>
       <label>趣味タグ（カンマ区切り）<input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="ゲーム, 音楽, 映画" /></label>
-      <label>テーマカラー
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-          {THEME_COLORS.map((c) => (
-            <button type="button" key={c} onClick={() => setTheme(c)}
-              style={{ width: 44, height: 44, borderRadius: 12, background: c, border: theme === c ? "3px solid #0E4A48" : "3px solid transparent", cursor: "pointer" }}
-              aria-label={c} />
-          ))}
-        </div>
-      </label>
       <button className="pill-primary" type="submit" disabled={uploading !== null}>保存する</button>
       {status && <p className="form-notice">{status}</p>}
     </form>
