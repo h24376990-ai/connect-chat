@@ -98,15 +98,6 @@ export function ProfileEditor({ userId, onSaved }: { userId: string; onSaved?: (
         </select>
       </label>
       <label>趣味タグ（カンマ区切り）<input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="ゲーム, 音楽, 映画" /></label>
-      <label>テーマカラー
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-          {THEME_COLORS.map((c) => (
-            <button type="button" key={c} onClick={() => setTheme(c)}
-              style={{ width: 44, height: 44, borderRadius: 12, background: c, border: theme === c ? "3px solid #0E4A48" : "3px solid transparent", cursor: "pointer" }}
-              aria-label={c} />
-          ))}
-        </div>
-      </label>
       <button className="pill-primary" type="submit" disabled={uploading !== null}>保存する</button>
       {status && <p className="form-notice">{status}</p>}
     </form>
