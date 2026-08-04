@@ -4,6 +4,8 @@ import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, LogOut, Megaph
 import { supabase } from "@/integrations/supabase/client";
 import { MobileShell } from "@/components/mobile-shell";
 import { ProfileDetailModal } from "@/components/profile-detail-modal";
+import { ProfileEditor } from "@/components/profile-editor";
+
 
 type AuthorInfo = { id: string; display_name: string; avatar_url: string | null; background_url: string | null; bio: string | null; age: number | null; gender: string | null; hobby_tags: string[]; username: string };
 type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; background_url: string | null; bio: string | null; hobby_tags: string[]; theme_color: string };
@@ -284,14 +286,10 @@ function HomePage() {
       }
     </main>}
     {tab === "profile" && <main className="simple-view">
-      <div className="profile-hero" style={profile?.background_url ? { background: `center/cover url(${profile.background_url})` } : undefined}>
-        <div className="large-avatar">{profile?.avatar_url ? <img src={profile.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : initial}</div>
-        <h2>{profile?.display_name}</h2><p>@{profile?.username}</p>
-        <div className="tag-row">{profile?.hobby_tags.map((t) => <span key={t}>#{t}</span>)}</div>
-      </div>
-      <button className="settings-row" onClick={() => navigate({ to: "/profile/edit" })}><Palette />プロフィール・テーマを編集<ChevronRight /></button>
+      <ProfileEditor userId={user.id} onSaved={load} />
       <button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button>
     </main>}
+
     {modal && <div className="modal-backdrop" onMouseDown={() => setModal(null)}><section className="modal-sheet" onMouseDown={(e) => e.stopPropagation()}><div className="sheet-handle" /><h2>{modal === "recruit" ? "フレンド募集を投稿" : modal === "community" ? "コミュニティを作成" : "タイムラインへ投稿"}</h2>{modal === "recruit" && <form onSubmit={submitRecruitment}><label>募集タイトル<input name="title" required maxLength={80} placeholder="ゲーム仲間募集！" /></label><label>ひとこと（空白可）<textarea name="body" maxLength={1000} placeholder="よろしくね" /></label><button className="pill-primary">募集を投稿</button></form>}{modal === "community" && <form onSubmit={submitCommunity}><label>コミュニティ名<input name="name" required maxLength={60} /></label><label>説明<textarea name="description" maxLength={1000} /></label><p className="form-hint">作成後、あなたは自動的にオーナー兼管理者として参加します。</p><button className="pill-primary">作成して参加</button></form>}{modal === "post" && <form onSubmit={submitPost}><label>投稿内容<textarea name="body" required maxLength={2000} placeholder="今なにしてる？" /></label><button className="pill-primary">投稿する</button></form>}{status && <p className="form-notice">{status}</p>}<button className="secondary-action" onClick={() => setModal(null)}>キャンセル</button></section></div>}
     {detailProfile && <ProfileDetailModal profile={detailProfile} onClose={() => setDetailProfile(null)} />}
   </MobileShell>;
