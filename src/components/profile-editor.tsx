@@ -9,7 +9,7 @@ type Profile = {
   hobby_tags: string[]; theme_color: string; age: number | null; gender: string | null;
 };
 
-const THEME_COLORS = ["#25B7A5", "#7CC77A", "#B47CE0", "#F09EBB", "#F0A85C", "#5C9CF0", "#4FC3B5", "#E27ABE"];
+
 
 export function ProfileEditor({ userId, onSaved }: { userId: string; onSaved?: () => void }) {
   const [profile, setProfile] = useState<Profile | null>(null);
