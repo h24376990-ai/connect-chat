@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, User, UsersRound } from "lucide-react";
+import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, Settings, User, UsersRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileShell } from "@/components/mobile-shell";
 import { ProfileDetailModal } from "@/components/profile-detail-modal";
@@ -29,7 +29,7 @@ function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [unread, setUnread] = useState(0);
-  const [modal, setModal] = useState<"recruit" | "community" | "post" | "theme" | null>(null);
+  const [modal, setModal] = useState<"recruit" | "community" | "post" | "theme" | "settings" | null>(null);
   const [themeColor, setThemeColor] = useState<string>("#25B7A5");
   const [status, setStatus] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -121,6 +121,18 @@ function HomePage() {
     if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
   }
 
+  async function submitFeedback(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const body = String(new FormData(form).get("body") ?? "").trim();
+    if (!body) return;
+    setStatus("送信中…");
+    const { error } = await supabase.from("feedback").insert({ user_id: user.id, body });
+    if (error) return setStatus(error.message);
+    form.reset();
+    setStatus("ご意見を管理者に送信しました。ありがとうございます！");
+  }
+
   async function applyFriendRequest(addresseeId: string) {
     if (addresseeId === user.id) return;
     const { error } = await supabase.rpc("send_friend_request", { _addressee: addresseeId });
@@ -168,6 +180,7 @@ function HomePage() {
       <h1 className="home-hello">{profile?.display_name ?? "ゲスト"}さん</h1>
       <div className="home-header-actions">
         <button aria-label="テーマ" className="round-btn" onClick={() => setModal("theme")}><Palette size={18} /></button>
+        <button aria-label="設定" className="round-btn" onClick={() => { setStatus(""); setModal("settings"); }}><Settings size={18} /></button>
       </div>
     </header>
     {tab === "home" && <main className="home-tiles-view">
@@ -295,7 +308,13 @@ function HomePage() {
       <button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button>
     </main>}
 
-    {modal && <div className="modal-backdrop" onMouseDown={() => setModal(null)}><section className="modal-sheet" onMouseDown={(e) => e.stopPropagation()}><div className="sheet-handle" /><h2>{modal === "recruit" ? "フレンド募集を投稿" : modal === "community" ? "コミュニティを作成" : modal === "theme" ? "テーマカラーを編集" : "タイムラインへ投稿"}</h2>{modal === "theme" && <div><div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>{THEME_COLORS.map((c) => (<button type="button" key={c} onClick={() => { setThemeColor(c); applyThemeColor(c); }} style={{ width: 48, height: 48, borderRadius: 14, background: c, border: themeColor === c ? "3px solid #0E4A48" : "3px solid transparent" }} aria-label={c} />))}</div><button className="pill-primary" style={{ marginTop: 16 }} onClick={async () => { const { error } = await supabase.from("profiles").update({ theme_color: themeColor }).eq("id", user.id); if (error) { setStatus(error.message); return; } setStatus("テーマカラーを保存しました"); setModal(null); load(); }}>保存する</button></div>}{modal === "recruit" && <form onSubmit={submitRecruitment}><label>募集タイトル<input name="title" required maxLength={80} placeholder="ゲーム仲間募集！" /></label><label>ひとこと（空白可）<textarea name="body" maxLength={1000} placeholder="よろしくね" /></label><button className="pill-primary">募集を投稿</button></form>}{modal === "community" && <form onSubmit={submitCommunity}><label>コミュニティ名<input name="name" required maxLength={60} /></label><label>説明<textarea name="description" maxLength={1000} /></label><p className="form-hint">作成後、あなたは自動的にオーナー兼管理者として参加します。</p><button className="pill-primary">作成して参加</button></form>}{modal === "post" && <form onSubmit={submitPost}><label>投稿内容<textarea name="body" required maxLength={2000} placeholder="今なにしてる？" /></label><button className="pill-primary">投稿する</button></form>}{status && <p className="form-notice">{status}</p>}<button className="secondary-action" onClick={() => setModal(null)}>キャンセル</button></section></div>}
+    {modal && <div className="modal-backdrop" onMouseDown={() => setModal(null)}><section className="modal-sheet" onMouseDown={(e) => e.stopPropagation()}><div className="sheet-handle" /><h2>{modal === "recruit" ? "フレンド募集を投稿" : modal === "community" ? "コミュニティを作成" : modal === "settings" ? "設定" : modal === "theme" ? "テーマカラーを編集" : "タイムラインへ投稿"}</h2>{modal === "theme" && <div><div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>{THEME_COLORS.map((c) => (<button type="button" key={c} onClick={() => { setThemeColor(c); applyThemeColor(c); }} style={{ width: 48, height: 48, borderRadius: 14, background: c, border: themeColor === c ? "3px solid #0E4A48" : "3px solid transparent" }} aria-label={c} />))}</div><button className="pill-primary" style={{ marginTop: 16 }} onClick={async () => { const { error } = await supabase.from("profiles").update({ theme_color: themeColor }).eq("id", user.id); if (error) { setStatus(error.message); return; } setStatus("テーマカラーを保存しました"); setModal(null); load(); }}>保存する</button></div>}{modal === "settings" && <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <form onSubmit={submitFeedback}>
+        <label>管理者に意見を送る<textarea name="body" required maxLength={2000} placeholder="ご意見・ご要望をお書きください" /></label>
+        <button className="pill-primary">意見を送信</button>
+      </form>
+      <button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button>
+    </div>}{modal === "recruit" && <form onSubmit={submitRecruitment}><label>募集タイトル<input name="title" required maxLength={80} placeholder="ゲーム仲間募集！" /></label><label>ひとこと（空白可）<textarea name="body" maxLength={1000} placeholder="よろしくね" /></label><button className="pill-primary">募集を投稿</button></form>}{modal === "community" && <form onSubmit={submitCommunity}><label>コミュニティ名<input name="name" required maxLength={60} /></label><label>説明<textarea name="description" maxLength={1000} /></label><p className="form-hint">作成後、あなたは自動的にオーナー兼管理者として参加します。</p><button className="pill-primary">作成して参加</button></form>}{modal === "post" && <form onSubmit={submitPost}><label>投稿内容<textarea name="body" required maxLength={2000} placeholder="今なにしてる？" /></label><button className="pill-primary">投稿する</button></form>}{status && <p className="form-notice">{status}</p>}<button className="secondary-action" onClick={() => setModal(null)}>キャンセル</button></section></div>}
     {detailProfile && <ProfileDetailModal profile={detailProfile} onClose={() => setDetailProfile(null)} />}
   </MobileShell>;
 }
