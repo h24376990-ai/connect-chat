@@ -205,7 +205,7 @@ function HomePage() {
     { key: "friends", label: "フレンド", tone: "pink", icon: <User />, onClick: () => setTab("search") },
     { key: "chat", label: "チャット", tone: "orange", icon: <MessageCircle />, onClick: () => setTab("chat") },
     { key: "cchat", label: "コミュニティチャット", tone: "blue", icon: <MessagesSquare />, onClick: () => setTab("chat") },
-    { key: "timeline", label: "タイムライン", tone: "teal", icon: <Globe />, onClick: () => setModal("post") },
+    { key: "timeline", label: "タイムライン", tone: "teal", icon: <Globe />, onClick: () => { setPostPage(1); setTab("timeline"); } },
     { key: "notify", label: "通知", tone: "magenta", icon: <BellIcon />, onClick: () => setTab("notifications") },
   ];
 
