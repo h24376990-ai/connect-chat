@@ -167,8 +167,27 @@ function HomePage() {
     setTimeout(() => setStatus(""), 2000);
   }
   async function submitPost(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const f = new FormData(event.currentTarget); const { error } = await supabase.from("posts").insert({ author_id: user.id, body: String(f.get("body")) });
-    if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
+    event.preventDefault();
+    const form = event.currentTarget;
+    const body = String(new FormData(form).get("body") ?? "").trim();
+    if (!body && postFiles.length === 0) { setStatus("内容か写真・動画を入れてください"); return; }
+    setPosting(true); setStatus("投稿中…");
+    try {
+      const urls: string[] = [];
+      for (const file of postFiles) {
+        const limit = file.type.startsWith("video") ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+        if (file.size > limit) throw new Error(`${file.name} のサイズが大きすぎます`);
+        urls.push(await uploadUserMedia(user.id, "posts", file));
+      }
+      const { error } = await supabase.from("posts").insert({ author_id: user.id, body: body || null, image_urls: urls });
+      if (error) throw error;
+      form.reset(); setPostFiles([]); setModal(null); setStatus(""); setPostPage(1);
+      await load();
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "投稿に失敗しました");
+    } finally {
+      setPosting(false);
+    }
   }
 
   async function startDirectChat(otherId: string) {
