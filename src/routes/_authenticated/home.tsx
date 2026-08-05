@@ -46,10 +46,14 @@ function HomePage() {
   const [communityMemberships, setCommunityMemberships] = useState<Map<string, CommunityMembership["status"]>>(new Map());
   const [detailProfile, setDetailProfile] = useState<AuthorInfo | null>(null);
   const [page, setPage] = useState(1);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postPage, setPostPage] = useState(1);
+  const [postFiles, setPostFiles] = useState<File[]>([]);
+  const [posting, setPosting] = useState(false);
   const PAGE_SIZE = 10;
 
   async function load() {
-    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes] = await Promise.all([
+    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes, postRes] = await Promise.all([
       supabase.from("profiles").select("id,display_name,username,avatar_url,background_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
       supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(200),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
@@ -57,6 +61,7 @@ function HomePage() {
       supabase.from("friendships").select("id,requester_id,addressee_id,status,created_at").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
       supabase.from("communities").select("id,owner_id,name,description,image_url,created_at").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(100),
       supabase.from("community_members").select("community_id,status").eq("user_id", user.id),
+      supabase.from("posts").select("id,author_id,body,image_urls,created_at").order("created_at", { ascending: false }).limit(200),
     ]);
     if (profileRes.data) {
       setProfile(profileRes.data as Profile);
