@@ -381,3 +381,13 @@
 .admin-msg-head { display: flex; gap: 8px; align-items: baseline; font-size: 12px; opacity: .8; margin-bottom: 4px; flex-wrap: wrap; }
 .admin-msg-head b { font-size: 14px; opacity: 1; color: #0E4A48; }
 .admin-media { max-width: 240px; max-height: 180px; border-radius: 8px; margin-top: 8px; }
+
+.timeline-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 8px 20px rgba(14, 74, 72, 0.08);
+}
