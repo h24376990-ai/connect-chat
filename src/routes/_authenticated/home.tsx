@@ -16,6 +16,12 @@ type CommunityMembership = { community_id: string; status: "pending" | "approved
 type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null };
 type FriendRequest = { id: string; requester_id: string; created_at: string; requester?: AuthorInfo | null };
 type Friend = { user_id: string; display_name: string; avatar_url: string | null };
+type Post = { id: string; author_id: string; body: string | null; image_urls: string[]; created_at: string; author?: AuthorInfo | null };
+
+function isVideoUrl(url: string) {
+  const path = url.split("?")[0].toLowerCase();
+  return /\.(mp4|mov|webm|m4v|ogv)$/.test(path);
+}
 
 export const Route = createFileRoute("/_authenticated/home")({ component: HomePage });
 
