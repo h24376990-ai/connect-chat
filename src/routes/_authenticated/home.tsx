@@ -1,11 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, Settings, User, UsersRound } from "lucide-react";
+import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, ImagePlus, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, Settings, User, UsersRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileShell } from "@/components/mobile-shell";
 import { ProfileDetailModal } from "@/components/profile-detail-modal";
 import { ProfileEditor } from "@/components/profile-editor";
 import { THEME_COLORS, applyThemeColor } from "@/lib/theme";
+import { uploadUserMedia } from "@/lib/media";
 
 
 type AuthorInfo = { id: string; display_name: string; avatar_url: string | null; background_url: string | null; bio: string | null; age: number | null; gender: string | null; hobby_tags: string[]; username: string };
@@ -16,6 +17,12 @@ type CommunityMembership = { community_id: string; status: "pending" | "approved
 type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null };
 type FriendRequest = { id: string; requester_id: string; created_at: string; requester?: AuthorInfo | null };
 type Friend = { user_id: string; display_name: string; avatar_url: string | null };
+type Post = { id: string; author_id: string; body: string | null; image_urls: string[]; created_at: string; author?: AuthorInfo | null };
+
+function isVideoUrl(url: string) {
+  const path = url.split("?")[0].toLowerCase();
+  return /\.(mp4|mov|webm|m4v|ogv)$/.test(path);
+}
 
 export const Route = createFileRoute("/_authenticated/home")({ component: HomePage });
 
@@ -25,7 +32,7 @@ type Tile = { key: string; label: string; tone: TileTone; icon: React.ReactNode;
 function HomePage() {
   const navigate = useNavigate();
   const { user } = Route.useRouteContext();
-  const [tab, setTab] = useState<"home" | "search" | "community" | "chat" | "notifications" | "profile">("home");
+  const [tab, setTab] = useState<"home" | "search" | "community" | "chat" | "notifications" | "profile" | "timeline">("home");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [unread, setUnread] = useState(0);
@@ -40,10 +47,14 @@ function HomePage() {
   const [communityMemberships, setCommunityMemberships] = useState<Map<string, CommunityMembership["status"]>>(new Map());
   const [detailProfile, setDetailProfile] = useState<AuthorInfo | null>(null);
   const [page, setPage] = useState(1);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postPage, setPostPage] = useState(1);
+  const [postFiles, setPostFiles] = useState<File[]>([]);
+  const [posting, setPosting] = useState(false);
   const PAGE_SIZE = 10;
 
   async function load() {
-    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes] = await Promise.all([
+    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes, postRes] = await Promise.all([
       supabase.from("profiles").select("id,display_name,username,avatar_url,background_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
       supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(200),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
@@ -51,6 +62,7 @@ function HomePage() {
       supabase.from("friendships").select("id,requester_id,addressee_id,status,created_at").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
       supabase.from("communities").select("id,owner_id,name,description,image_url,created_at").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(100),
       supabase.from("community_members").select("community_id,status").eq("user_id", user.id),
+      supabase.from("posts").select("id,author_id,body,image_urls,created_at").order("created_at", { ascending: false }).limit(200),
     ]);
     if (profileRes.data) {
       setProfile(profileRes.data as Profile);
@@ -58,19 +70,22 @@ function HomePage() {
       applyThemeColor((profileRes.data as Profile).theme_color);
     }
     const recruits = (recruitRes.data ?? []) as Recruitment[];
+    const timelinePosts = ((postRes.data ?? []) as Post[]).map((p) => ({ ...p, image_urls: p.image_urls ?? [] }));
     const allFriendships = (friendReqRes.data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string; created_at: string }>;
     const pending = allFriendships.filter((f) => f.status === "pending" && f.addressee_id === user.id).map((f) => ({ id: f.id, requester_id: f.requester_id, created_at: f.created_at }));
     const accepted = allFriendships.filter((f) => f.status === "accepted").map((f) => f.requester_id === user.id ? f.addressee_id : f.requester_id);
-    const authorIds = Array.from(new Set([...recruits.map((r) => r.author_id), ...pending.map((r) => r.requester_id), ...accepted]));
+    const authorIds = Array.from(new Set([...recruits.map((r) => r.author_id), ...timelinePosts.map((p) => p.author_id), ...pending.map((r) => r.requester_id), ...accepted]));
     let authorMap = new Map<string, AuthorInfo>();
     if (authorIds.length) {
       const { data: authors } = await supabase.from("profiles").select("id,username,display_name,avatar_url,background_url,bio,hobby_tags,age,gender").in("id", authorIds);
       authorMap = new Map((authors ?? []).map((a) => [a.id, a as AuthorInfo]));
     }
     recruits.forEach((r) => { r.author = authorMap.get(r.author_id) ?? null; });
+    timelinePosts.forEach((p) => { p.author = authorMap.get(p.author_id) ?? null; });
     const reqs: FriendRequest[] = pending.map((p) => ({ ...p, requester: authorMap.get(p.requester_id) ?? null }));
     const fs: Friend[] = accepted.map((id) => { const a = authorMap.get(id); return { user_id: id, display_name: a?.display_name ?? "フレンド", avatar_url: a?.avatar_url ?? null }; });
     setRecruitments(recruits);
+    setPosts(timelinePosts);
     setUnread(notificationRes.count ?? 0);
     setNotifications((notifListRes.data ?? []) as Notification[]);
     setFriendRequests(reqs);
@@ -153,8 +168,27 @@ function HomePage() {
     setTimeout(() => setStatus(""), 2000);
   }
   async function submitPost(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const f = new FormData(event.currentTarget); const { error } = await supabase.from("posts").insert({ author_id: user.id, body: String(f.get("body")) });
-    if (error) return setStatus(error.message); setModal(null); setStatus(""); await load();
+    event.preventDefault();
+    const form = event.currentTarget;
+    const body = String(new FormData(form).get("body") ?? "").trim();
+    if (!body && postFiles.length === 0) { setStatus("内容か写真・動画を入れてください"); return; }
+    setPosting(true); setStatus("投稿中…");
+    try {
+      const urls: string[] = [];
+      for (const file of postFiles) {
+        const limit = file.type.startsWith("video") ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+        if (file.size > limit) throw new Error(`${file.name} のサイズが大きすぎます`);
+        urls.push(await uploadUserMedia(user.id, "posts", file));
+      }
+      const { error } = await supabase.from("posts").insert({ author_id: user.id, body: body || null, image_urls: urls });
+      if (error) throw error;
+      form.reset(); setPostFiles([]); setModal(null); setStatus(""); setPostPage(1);
+      await load();
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "投稿に失敗しました");
+    } finally {
+      setPosting(false);
+    }
   }
 
   async function startDirectChat(otherId: string) {
@@ -171,7 +205,7 @@ function HomePage() {
     { key: "friends", label: "フレンド", tone: "pink", icon: <User />, onClick: () => setTab("search") },
     { key: "chat", label: "チャット", tone: "orange", icon: <MessageCircle />, onClick: () => setTab("chat") },
     { key: "cchat", label: "コミュニティチャット", tone: "blue", icon: <MessagesSquare />, onClick: () => setTab("chat") },
-    { key: "timeline", label: "タイムライン", tone: "teal", icon: <Globe />, onClick: () => setModal("post") },
+    { key: "timeline", label: "タイムライン", tone: "teal", icon: <Globe />, onClick: () => { setPostPage(1); setTab("timeline"); } },
     { key: "notify", label: "通知", tone: "magenta", icon: <BellIcon />, onClick: () => setTab("notifications") },
   ];
 
@@ -273,6 +307,49 @@ function HomePage() {
             })}
           </section>
           {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={cur <= 1} onClick={() => setPage(cur - 1)}>← 前</button><span className="pager-info">{cur} / {totalPages}</span><button className="ghost-pill" disabled={cur >= totalPages} onClick={() => setPage(cur + 1)}>次 →</button></div>}
+        </>;
+      })()}
+    </main>}
+    {tab === "timeline" && <main className="simple-view discover-view">
+      <div className="page-title"><Globe /><div><p>みんなの投稿</p><h2>タイムライン</h2></div></div>
+      <form className="timeline-composer" onSubmit={submitPost}>
+        <label>投稿内容<textarea name="body" maxLength={2000} placeholder="今なにしてる？" /></label>
+        <label className="ghost-pill" style={{ display: "inline-flex", cursor: "pointer" }}>
+          <ImagePlus size={16} />写真・動画を選ぶ
+          <input type="file" accept="image/*,video/*" multiple style={{ display: "none" }} onChange={(e) => setPostFiles(Array.from(e.target.files ?? []))} />
+        </label>
+        {postFiles.length > 0 && <p className="form-hint">{postFiles.map((f) => f.name).join(", ")}</p>}
+        <button className="pill-primary" disabled={posting}>{posting ? "投稿中…" : "投稿する"}</button>
+      </form>
+      {status && <p className="form-notice">{status}</p>}
+      {(() => {
+        if (posts.length === 0) return <div className="empty-panel soft"><Globe /><p>まだ投稿はありません。</p></div>;
+        const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+        const cur = Math.min(postPage, totalPages);
+        const slice = posts.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
+        return <>
+          <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {slice.map((p) => {
+              const isMine = p.author_id === user.id;
+              const name = isMine ? "自分" : (p.author?.display_name ?? "ユーザー");
+              return <article key={p.id} className="card-tile card-tile-teal" style={{ padding: 14 }}>
+                <header className="card-tile-head">
+                  <button type="button" className="tile-icon tile-icon-teal" onClick={() => p.author && setDetailProfile(p.author)} style={{ border: "none", padding: 0, cursor: "pointer" }}>
+                    {p.author?.avatar_url ? <img src={p.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : name.slice(0, 1)}
+                  </button>
+                  <span className="card-tile-meta">{name}・{new Date(p.created_at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                </header>
+                {p.body && <p className="card-tile-body" style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{p.body}</p>}
+                {p.image_urls.length > 0 && <div style={{ display: "grid", gridTemplateColumns: p.image_urls.length > 1 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 10 }}>
+                  {p.image_urls.map((url) => isVideoUrl(url)
+                    ? <video key={url} src={url} controls playsInline style={{ width: "100%", borderRadius: 12, background: "#000" }} />
+                    : <img key={url} src={url} alt="" loading="lazy" style={{ width: "100%", borderRadius: 12, objectFit: "cover" }} />)}
+                </div>}
+                {isMine && <button className="secondary-action" style={{ marginTop: 10 }} onClick={async () => { await supabase.from("posts").delete().eq("id", p.id); await load(); }}>削除</button>}
+              </article>;
+            })}
+          </section>
+          {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={cur <= 1} onClick={() => setPostPage(cur - 1)}>← 前</button><span className="pager-info">{cur} / {totalPages}</span><button className="ghost-pill" disabled={cur >= totalPages} onClick={() => setPostPage(cur + 1)}>次 →</button></div>}
         </>;
       })()}
     </main>}
