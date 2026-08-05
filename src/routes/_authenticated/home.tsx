@@ -25,7 +25,7 @@ type Tile = { key: string; label: string; tone: TileTone; icon: React.ReactNode;
 function HomePage() {
   const navigate = useNavigate();
   const { user } = Route.useRouteContext();
-  const [tab, setTab] = useState<"home" | "search" | "community" | "chat" | "notifications" | "profile">("home");
+  const [tab, setTab] = useState<"home" | "search" | "community" | "chat" | "notifications" | "profile" | "timeline">("home");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [unread, setUnread] = useState(0);
