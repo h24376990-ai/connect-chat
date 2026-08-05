@@ -69,19 +69,22 @@ function HomePage() {
       applyThemeColor((profileRes.data as Profile).theme_color);
     }
     const recruits = (recruitRes.data ?? []) as Recruitment[];
+    const timelinePosts = ((postRes.data ?? []) as Post[]).map((p) => ({ ...p, image_urls: p.image_urls ?? [] }));
     const allFriendships = (friendReqRes.data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string; created_at: string }>;
     const pending = allFriendships.filter((f) => f.status === "pending" && f.addressee_id === user.id).map((f) => ({ id: f.id, requester_id: f.requester_id, created_at: f.created_at }));
     const accepted = allFriendships.filter((f) => f.status === "accepted").map((f) => f.requester_id === user.id ? f.addressee_id : f.requester_id);
-    const authorIds = Array.from(new Set([...recruits.map((r) => r.author_id), ...pending.map((r) => r.requester_id), ...accepted]));
+    const authorIds = Array.from(new Set([...recruits.map((r) => r.author_id), ...timelinePosts.map((p) => p.author_id), ...pending.map((r) => r.requester_id), ...accepted]));
     let authorMap = new Map<string, AuthorInfo>();
     if (authorIds.length) {
       const { data: authors } = await supabase.from("profiles").select("id,username,display_name,avatar_url,background_url,bio,hobby_tags,age,gender").in("id", authorIds);
       authorMap = new Map((authors ?? []).map((a) => [a.id, a as AuthorInfo]));
     }
     recruits.forEach((r) => { r.author = authorMap.get(r.author_id) ?? null; });
+    timelinePosts.forEach((p) => { p.author = authorMap.get(p.author_id) ?? null; });
     const reqs: FriendRequest[] = pending.map((p) => ({ ...p, requester: authorMap.get(p.requester_id) ?? null }));
     const fs: Friend[] = accepted.map((id) => { const a = authorMap.get(id); return { user_id: id, display_name: a?.display_name ?? "フレンド", avatar_url: a?.avatar_url ?? null }; });
     setRecruitments(recruits);
+    setPosts(timelinePosts);
     setUnread(notificationRes.count ?? 0);
     setNotifications((notifListRes.data ?? []) as Notification[]);
     setFriendRequests(reqs);
