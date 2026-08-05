@@ -41,8 +41,7 @@ function AuthPage() {
     <main className="auth-screen">
       <div className="auth-hero">
         <div className="auth-logo" aria-hidden="true"><MessageCircle strokeWidth={2.5} /></div>
-        <h1 className="auth-title">つながり</h1>
-        <p className="auth-sub">SNS + チャットアプリ</p>
+        <h1 className="auth-title">つながりチャット(β版)</h1>
       </div>
       <section className="auth-card">
         <div className="auth-pill" role="tablist">
