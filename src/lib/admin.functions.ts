@@ -92,3 +92,17 @@ export const adminListUsers = createServerFn({ method: "GET" })
     const { data } = await supabaseAdmin.from("profiles").select("id,username,display_name,is_online,last_seen_at,created_at").order("created_at", { ascending: false }).limit(200);
     return data ?? [];
   });
+
+export const adminListFeedback = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin.from("feedback").select("id,user_id,body,created_at").order("created_at", { ascending: false }).limit(200);
+    const ids = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id,display_name,username").in("id", ids)
+      : { data: [] as Array<{ id: string; display_name: string; username: string }> };
+    const map = new Map((profs ?? []).map((p) => [p.id, p]));
+    return (rows ?? []).map((r) => ({ ...r, sender: map.get(r.user_id) ?? null }));
+  });
