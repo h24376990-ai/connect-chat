@@ -310,6 +310,49 @@ function HomePage() {
         </>;
       })()}
     </main>}
+    {tab === "timeline" && <main className="simple-view discover-view">
+      <div className="page-title"><Globe /><div><p>みんなの投稿</p><h2>タイムライン</h2></div></div>
+      <form className="timeline-composer" onSubmit={submitPost}>
+        <label>投稿内容<textarea name="body" maxLength={2000} placeholder="今なにしてる？" /></label>
+        <label className="ghost-pill" style={{ display: "inline-flex", cursor: "pointer" }}>
+          <ImagePlus size={16} />写真・動画を選ぶ
+          <input type="file" accept="image/*,video/*" multiple style={{ display: "none" }} onChange={(e) => setPostFiles(Array.from(e.target.files ?? []))} />
+        </label>
+        {postFiles.length > 0 && <p className="form-hint">{postFiles.map((f) => f.name).join(", ")}</p>}
+        <button className="pill-primary" disabled={posting}>{posting ? "投稿中…" : "投稿する"}</button>
+      </form>
+      {status && <p className="form-notice">{status}</p>}
+      {(() => {
+        if (posts.length === 0) return <div className="empty-panel soft"><Globe /><p>まだ投稿はありません。</p></div>;
+        const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+        const cur = Math.min(postPage, totalPages);
+        const slice = posts.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
+        return <>
+          <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {slice.map((p) => {
+              const isMine = p.author_id === user.id;
+              const name = isMine ? "自分" : (p.author?.display_name ?? "ユーザー");
+              return <article key={p.id} className="card-tile card-tile-teal" style={{ padding: 14 }}>
+                <header className="card-tile-head">
+                  <button type="button" className="tile-icon tile-icon-teal" onClick={() => p.author && setDetailProfile(p.author)} style={{ border: "none", padding: 0, cursor: "pointer" }}>
+                    {p.author?.avatar_url ? <img src={p.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : name.slice(0, 1)}
+                  </button>
+                  <span className="card-tile-meta">{name}・{new Date(p.created_at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                </header>
+                {p.body && <p className="card-tile-body" style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{p.body}</p>}
+                {p.image_urls.length > 0 && <div style={{ display: "grid", gridTemplateColumns: p.image_urls.length > 1 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 10 }}>
+                  {p.image_urls.map((url) => isVideoUrl(url)
+                    ? <video key={url} src={url} controls playsInline style={{ width: "100%", borderRadius: 12, background: "#000" }} />
+                    : <img key={url} src={url} alt="" loading="lazy" style={{ width: "100%", borderRadius: 12, objectFit: "cover" }} />)}
+                </div>}
+                {isMine && <button className="secondary-action" style={{ marginTop: 10 }} onClick={async () => { await supabase.from("posts").delete().eq("id", p.id); await load(); }}>削除</button>}
+              </article>;
+            })}
+          </section>
+          {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={cur <= 1} onClick={() => setPostPage(cur - 1)}>← 前</button><span className="pager-info">{cur} / {totalPages}</span><button className="ghost-pill" disabled={cur >= totalPages} onClick={() => setPostPage(cur + 1)}>次 →</button></div>}
+        </>;
+      })()}
+    </main>}
     {tab === "chat" && <main className="simple-view">
       <div className="page-title"><MessageCircle /><div><p>リアルタイムで話そう</p><h2>チャット</h2></div></div>
       {friends.length === 0
