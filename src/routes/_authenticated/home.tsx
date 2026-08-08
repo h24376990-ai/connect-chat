@@ -24,7 +24,18 @@ function isVideoUrl(url: string) {
   return /\.(mp4|mov|webm|m4v|ogv)$/.test(path);
 }
 
-export const Route = createFileRoute("/_authenticated/home")({ component: HomePage });
+export const Route = createFileRoute("/_authenticated/home")({
+  head: () => ({
+    meta: [
+      { title: "ホーム | つながりチャット" },
+      { name: "description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるつながりチャットのホーム画面です。" },
+      { property: "og:title", content: "ホーム | つながりチャット" },
+      { property: "og:description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるホーム画面。" },
+    ],
+    links: [{ rel: "canonical", href: "https://tsuna-chat-hub.lovable.app/home" }],
+  }),
+  component: HomePage,
+});
 
 type TileTone = "cyan" | "green" | "purple" | "pink" | "orange" | "blue" | "teal" | "magenta";
 type Tile = { key: string; label: string; tone: TileTone; icon: React.ReactNode; sub?: string; onClick: () => void; extra?: React.ReactNode };
