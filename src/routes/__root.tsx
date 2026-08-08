@@ -79,13 +79,32 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "つながりチャット | 友達とコミュニティ" },
-      { name: "description", content: "友達作り、コミュニティ交流、個別チャットを楽しめる日本語SNSチャットアプリ。" },
+      { name: "description", content: "友達作り、コミュニティ交流、個別チャットを楽しめる日本語SNSチャットアプリ。ユーザーIDだけで登録でき、写真や動画も送れます。" },
       { name: "author", content: "つながりチャット" },
-      { property: "og:title", content: "つながりチャット" },
-      { property: "og:description", content: "友達やコミュニティと安心してつながれるSNSチャットアプリ。" },
+      { property: "og:title", content: "つながりチャット — 友達とコミュニティでつながるSNS" },
+      { property: "og:description", content: "友達作り、コミュニティ交流、個別チャットを楽しめる日本語SNSチャットアプリ。ユーザーIDだけで登録できます。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "つながりチャット",
+          url: "https://tsuna-chat-hub.lovable.app",
+          inLanguage: "ja",
+          description:
+            "友達作り、コミュニティ交流、個別チャットを楽しめる日本語SNSチャットアプリ。",
+          publisher: {
+            "@type": "Organization",
+            name: "つながりチャット",
+            url: "https://tsuna-chat-hub.lovable.app",
+          },
+        }),
+      },
     ],
     links: [
       {
@@ -94,6 +113,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
+
   }),
   shellComponent: RootShell,
   component: RootComponent,

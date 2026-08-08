@@ -9,7 +9,31 @@ type Profile = { id: string; display_name: string; username: string; avatar_url:
 type Recruitment = { id: string; title: string; body: string | null; created_at: string };
 type FriendshipStatus = "none" | "pending_out" | "pending_in" | "accepted" | "self";
 
-export const Route = createFileRoute("/_authenticated/u/$userId")({ component: UserProfilePage });
+export const Route = createFileRoute("/_authenticated/u/$userId")({
+  head: ({ params }) => ({
+    meta: [
+      { title: "ユーザープロフィール | つながりチャット" },
+      { name: "description", content: "つながりチャットのユーザープロフィール。ひとこと、趣味、募集中のメッセージを見てフレンド申請できます。" },
+      { property: "og:title", content: "ユーザープロフィール | つながりチャット" },
+      { property: "og:description", content: "プロフィールを見てフレンド申請やチャットを始めましょう。" },
+      { property: "og:type", content: "profile" },
+    ],
+    links: [{ rel: "canonical", href: `https://tsuna-chat-hub.lovable.app/u/${params.userId}` }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ProfilePage",
+          url: `https://tsuna-chat-hub.lovable.app/u/${params.userId}`,
+          inLanguage: "ja",
+          isPartOf: { "@type": "WebSite", name: "つながりチャット", url: "https://tsuna-chat-hub.lovable.app" },
+        }),
+      },
+    ],
+  }),
+  component: UserProfilePage,
+});
 
 const GENDER_LABEL: Record<string, string> = { male: "男性", female: "女性", other: "その他" };
 
