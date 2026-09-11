@@ -78,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "google-site-verification", content: "5QjXHLyg8K-GFTq-BYLGxwQx6OrdkpY2QdXyEaeHwj8" },
+      { name: "google-site-verification", content: "bnJhebdMilwSg3asfMcYCybf1_EgKua5IRqFewNm16k" },
       { title: "つながりチャット | 友達とコミュニティ" },
       { name: "description", content: "友達作り、コミュニティ交流、個別チャットを楽しめる日本語SNSチャットアプリ。ユーザーIDだけで登録でき、写真や動画も送れます。" },
       { name: "author", content: "つながりチャット" },
