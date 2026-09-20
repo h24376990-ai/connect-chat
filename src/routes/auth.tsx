@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { registerWithUsername, signInWithUsername } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "ログイン | つながりチャット" }, { name: "description", content: "つながりチャットへユーザーIDでログイン、新規登録できます。" }] }),
+  head: () => ({ meta: [{ title: "ログイン | ブラウザチャット" }, { name: "description", content: "ブラウザチャットへユーザーIDでログイン、新規登録できます。" }] }),
   component: AuthPage,
 });
 
