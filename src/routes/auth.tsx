@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { registerWithUsername, signInWithUsername } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "ログイン | つながりチャット" }, { name: "description", content: "つながりチャットへユーザーIDでログイン、新規登録できます。" }] }),
+  head: () => ({ meta: [{ title: "ログイン | ブラウザチャット" }, { name: "description", content: "ブラウザチャットへユーザーIDでログイン、新規登録できます。" }] }),
   component: AuthPage,
 });
 
@@ -41,7 +41,7 @@ function AuthPage() {
     <main className="auth-screen">
       <div className="auth-hero">
         <div className="auth-logo" aria-hidden="true"><MessageCircle strokeWidth={2.5} /></div>
-        <h1 className="auth-title">つながりチャット(β版)<span style={{ display: "block", fontSize: 13, fontWeight: 500, opacity: 0.8, marginTop: 6 }}>友達とコミュニティでつながるSNSチャット</span></h1>
+        <h1 className="auth-title">ブラウザチャット<span style={{ display: "block", fontSize: 13, fontWeight: 500, opacity: 0.8, marginTop: 6 }}>友達とコミュニティでつながるSNSチャット</span></h1>
       </div>
       <section className="auth-card">
         <div className="auth-pill" role="tablist">
