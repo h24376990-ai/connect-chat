@@ -41,7 +41,7 @@ function AuthPage() {
     <main className="auth-screen">
       <div className="auth-hero">
         <div className="auth-logo" aria-hidden="true"><MessageCircle strokeWidth={2.5} /></div>
-        <h1 className="auth-title">つながりチャット(β版)<span style={{ display: "block", fontSize: 13, fontWeight: 500, opacity: 0.8, marginTop: 6 }}>友達とコミュニティでつながるSNSチャット</span></h1>
+        <h1 className="auth-title">ブラウザチャット<span style={{ display: "block", fontSize: 13, fontWeight: 500, opacity: 0.8, marginTop: 6 }}>友達とコミュニティでつながるSNSチャット</span></h1>
       </div>
       <section className="auth-card">
         <div className="auth-pill" role="tablist">
