@@ -13,5 +13,5 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   useEffect(() => { supabase.auth.getUser().then(({ data }) => navigate({ to: data.user ? "/home" : "/auth", replace: true })); }, [navigate]);
-  return <main className="splash-screen"><div className="brand-mark"><span /><span /><span /></div><h1>つながりチャット — 友達とコミュニティでつながるSNSチャット</h1><p>あなたの居場所を準備しています…</p></main>;
+  return <main className="splash-screen"><div className="brand-mark"><span /><span /><span /></div><h1>ブラウザチャット【サクチャ】</h1><p>登録不要で今すぐ話せる無料ツール</p></main>;
 }

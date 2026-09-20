@@ -45,7 +45,7 @@ function AdminDashboardPage() {
 
   return <div className="admin-wrap">
     <header className="admin-header">
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}><ShieldCheck /><h1>つながりチャット 管理サイト</h1></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}><ShieldCheck /><h1>ブラウザチャット【サクチャ】 管理サイト</h1></div>
       <button className="secondary-action" onClick={logout}><LogOut size={14} /> ログアウト</button>
     </header>
     <nav className="admin-tabs">

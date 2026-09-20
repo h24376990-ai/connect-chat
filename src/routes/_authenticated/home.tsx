@@ -27,9 +27,9 @@ function isVideoUrl(url: string) {
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({
     meta: [
-      { title: "ホーム | つながりチャット" },
-      { name: "description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるつながりチャットのホーム画面です。" },
-      { property: "og:title", content: "ホーム | つながりチャット" },
+      { title: "ホーム | ブラウザチャット【サクチャ】" },
+      { name: "description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるブラウザチャット【サクチャ】のホーム画面です。" },
+      { property: "og:title", content: "ホーム | ブラウザチャット【サクチャ】" },
       { property: "og:description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるホーム画面。" },
     ],
     links: [{ rel: "canonical", href: "https://tsuna-chat-hub.lovable.app/home" }],

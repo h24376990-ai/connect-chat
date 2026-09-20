@@ -12,9 +12,9 @@ type FriendshipStatus = "none" | "pending_out" | "pending_in" | "accepted" | "se
 export const Route = createFileRoute("/_authenticated/u/$userId")({
   head: ({ params }) => ({
     meta: [
-      { title: "ユーザープロフィール | つながりチャット" },
-      { name: "description", content: "つながりチャットのユーザープロフィール。ひとこと、趣味、募集中のメッセージを見てフレンド申請できます。" },
-      { property: "og:title", content: "ユーザープロフィール | つながりチャット" },
+      { title: "ユーザープロフィール | ブラウザチャット【サクチャ】" },
+      { name: "description", content: "ブラウザチャット【サクチャ】のユーザープロフィール。ひとこと、趣味、募集中のメッセージを見てフレンド申請できます。" },
+      { property: "og:title", content: "ユーザープロフィール | ブラウザチャット【サクチャ】" },
       { property: "og:description", content: "プロフィールを見てフレンド申請やチャットを始めましょう。" },
       { property: "og:type", content: "profile" },
     ],
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/u/$userId")({
           "@type": "ProfilePage",
           url: `https://tsuna-chat-hub.lovable.app/u/${params.userId}`,
           inLanguage: "ja",
-          isPartOf: { "@type": "WebSite", name: "つながりチャット", url: "https://tsuna-chat-hub.lovable.app" },
+          isPartOf: { "@type": "WebSite", name: "ブラウザチャット【サクチャ】", url: "https://tsuna-chat-hub.lovable.app" },
         }),
       },
     ],
