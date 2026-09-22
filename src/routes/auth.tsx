@@ -1,9 +1,13 @@
 import { FormEvent, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { AtSign, Eye, EyeOff, Lock, MessageCircle, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { registerWithUsername, signInWithUsername } from "@/lib/auth.functions";
+
+const INTERNAL_EMAIL_DOMAIN = "users.tsunagari.local";
+
+function internalEmailFor(username: string) {
+  return `${username.toLowerCase()}@${INTERNAL_EMAIL_DOMAIN}`;
+}
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "ログイン | ブラウザチャット【サクチャ】" }, { name: "description", content: "ブラウザチャット【サクチャ】へユーザーIDでログイン、新規登録できます。" }] }),
@@ -12,8 +16,6 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const loginFn = useServerFn(signInWithUsername);
-  const registerFn = useServerFn(registerWithUsername);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,11 +28,32 @@ function AuthPage() {
     const username = String(form.get("username") ?? "").trim();
     const password = String(form.get("password") ?? "");
     try {
-      const result = mode === "login"
-        ? await loginFn({ data: { username, password } })
-        : await registerFn({ data: { username, password, displayName: String(form.get("displayName") ?? "").trim() } });
-      const { error: sessionError } = await supabase.auth.setSession({ access_token: result.accessToken, refresh_token: result.refreshToken });
-      if (sessionError) throw sessionError;
+      const email = internalEmailFor(username);
+      if (mode === "login") {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw new Error("ユーザーIDまたはパスワードが正しくありません");
+      } else {
+        const displayName = String(form.get("displayName") ?? "").trim();
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { username, display_name: displayName } },
+        });
+        if (signUpError || !signUpData.user || !signUpData.session) {
+          throw new Error("このユーザーIDは使用されています");
+        }
+
+        const userId = signUpData.user.id;
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: userId,
+          username,
+          display_name: displayName,
+        });
+        if (profileError) throw new Error("プロフィールを作成できませんでした");
+
+        const { error: settingsError } = await supabase.from("user_settings").insert({ user_id: userId });
+        if (settingsError) throw new Error("初期設定を保存できませんでした");
+      }
       navigate({ to: "/home", replace: true });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "処理に失敗しました");
