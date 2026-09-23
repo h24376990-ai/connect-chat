@@ -4,7 +4,16 @@ import { Inbox, LogOut, MessageSquare, ShieldCheck, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { adminListFeedback, adminListMessages, adminListUsers, adminStats } from "@/lib/admin.functions";
 
-export const Route = createFileRoute("/admin/")({ component: AdminDashboardPage });
+export const Route = createFileRoute("/admin/")({
+  head: () => ({
+    meta: [
+      { title: "管理画面 | ブラウザチャット【サクチャ】" },
+      { name: "description", content: "ブラウザチャット【サクチャ】の管理画面（非公開）。" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
+  component: AdminDashboardPage,
+});
 
 type Stats = { users: number; messages: number; mediaMessages: number; onlineUsers: number; communities: number; recruits: number };
 type Message = { id: string; conversation_id: string; sender_id: string; kind: string; body: string | null; media_url: string | null; created_at: string; sender: { display_name: string; username: string } | null };

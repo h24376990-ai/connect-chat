@@ -10,7 +10,19 @@ type Member = { user_id: string; display_name: string; avatar_url: string | null
 const MAX_IMAGE = 10 * 1024 * 1024;
 const MAX_VIDEO = 50 * 1024 * 1024;
 
-export const Route = createFileRoute("/_authenticated/chat/$conversationId")({ component: ChatPage });
+export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
+  head: ({ params }) => ({
+    meta: [
+      { title: "チャット | ブラウザチャット【サクチャ】" },
+      { name: "description", content: "ブラウザチャット【サクチャ】の1対1リアルタイムチャット。テキスト・画像・動画を送ってフレンドと楽しく会話できます。" },
+      { property: "og:title", content: "チャット | ブラウザチャット【サクチャ】" },
+      { property: "og:description", content: "テキスト・画像・動画を送ってフレンドとリアルタイムチャット。" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [{ rel: "canonical", href: `https://tsuna-chat-hub.lovable.app/chat/${params.conversationId}` }],
+  }),
+  component: ChatPage,
+});
 
 function ChatPage() {
   const { conversationId } = Route.useParams();
