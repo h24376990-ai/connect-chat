@@ -31,7 +31,7 @@ function AdminLoginPage() {
         <label>パスワード<input name="password" type="password" required minLength={6} maxLength={128} autoComplete="current-password" /></label>
         <button className="pill-primary" disabled={busy}>ログイン</button>
         {status && <p className="form-notice">{status}</p>}
-        <p className="form-hint">初回ログイン時は入力したパスワードが自動的に設定されます。</p>
+        <p className="form-hint">管理者権限のないアカウントではログインできません。</p>
       </form>
     </div>
   </div>;
