@@ -34,6 +34,16 @@ function AuthPage() {
         if (signInError) throw new Error("ユーザーIDまたはパスワードが正しくありません");
       } else {
         const displayName = String(form.get("displayName") ?? "").trim();
+        const { data: blocked } = await supabase
+          .from("deleted_usernames")
+          .select("blocked_until")
+          .eq("username", username.toLowerCase())
+          .gt("blocked_until", new Date().toISOString())
+          .maybeSingle();
+        if (blocked) {
+          const until = new Date(blocked.blocked_until).toLocaleString("ja-JP");
+          throw new Error(`このユーザーIDは削除済みのため、${until} まで登録できません`);
+        }
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
