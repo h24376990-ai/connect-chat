@@ -152,6 +152,24 @@ export type Database = {
           },
         ]
       }
+      deleted_usernames: {
+        Row: {
+          blocked_until: string
+          created_at: string
+          username: string
+        }
+        Insert: {
+          blocked_until: string
+          created_at?: string
+          username: string
+        }
+        Update: {
+          blocked_until?: string
+          created_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           body: string
