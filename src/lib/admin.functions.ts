@@ -3,8 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ADMIN_EMAIL = "ht110111@icloud.com";
-const ADMIN_PASSWORD = "mokou1101";
+const INTERNAL_EMAIL_DOMAIN = "users.tsunagari.local";
 
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -15,34 +14,16 @@ async function assertAdmin(userId: string) {
 export const adminSignIn = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ email: z.string().trim().toLowerCase(), password: z.string().min(6).max(128) }).parse(input))
   .handler(async ({ data }) => {
-    if (data.email !== ADMIN_EMAIL) throw new Error("この画面は管理者専用です");
-    if (data.password !== ADMIN_PASSWORD) throw new Error("パスワードが違います");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // Ensure the admin auth user exists and its password matches the fixed admin password.
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    let adminUser = list?.users.find((u) => (u.email ?? "").toLowerCase() === ADMIN_EMAIL);
-    if (!adminUser) {
-      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-        email: ADMIN_EMAIL, password: ADMIN_PASSWORD, email_confirm: true,
-        user_metadata: { display_name: "管理者", username: "admin" },
-      });
-      if (error || !created.user) throw new Error("管理者アカウントを作成できませんでした");
-      adminUser = created.user;
-      await supabaseAdmin.from("profiles").upsert({ id: adminUser.id, username: "admin", display_name: "管理者" });
-      await supabaseAdmin.from("user_settings").upsert({ user_id: adminUser.id });
-    } else {
-      await supabaseAdmin.auth.admin.updateUserById(adminUser.id, { password: ADMIN_PASSWORD, email_confirm: true });
-    }
-    await supabaseAdmin.from("user_roles").upsert({ user_id: adminUser.id, role: "admin" });
-
+    const loginId = data.email.includes("@") ? data.email : `${data.email}@${INTERNAL_EMAIL_DOMAIN}`;
 
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY;
     if (!url || !key) throw new Error("認証サービスに接続できません");
     const authClient = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data: session, error: signErr } = await authClient.auth.signInWithPassword({ email: ADMIN_EMAIL, password: data.password });
-    if (signErr || !session.session) throw new Error("パスワードが違います");
+    const { data: session, error: signErr } = await authClient.auth.signInWithPassword({ email: loginId, password: data.password });
+    if (signErr || !session.session) throw new Error("ユーザーIDまたはパスワードが正しくありません");
+
+    await assertAdmin(session.user!.id);
     return { accessToken: session.session.access_token, refreshToken: session.session.refresh_token };
   });
 
