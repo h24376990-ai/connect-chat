@@ -3,7 +3,19 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Mic, MicOff, PhoneOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/_authenticated/call/$conversationId")({ component: CallPage });
+export const Route = createFileRoute("/_authenticated/call/$conversationId")({
+  head: ({ params }) => ({
+    meta: [
+      { title: "通話 | ブラウザチャット【サクチャ】" },
+      { name: "description", content: "ブラウザチャット【サクチャ】の音声通話機能。ブラウザ上でフレンドとすぐに通話を始められます。" },
+      { property: "og:title", content: "通話 | ブラウザチャット【サクチャ】" },
+      { property: "og:description", content: "ブラウザ上でフレンドとすぐに音声通話を始められます。" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [{ rel: "canonical", href: `https://tsuna-chat-hub.lovable.app/call/${params.conversationId}` }],
+  }),
+  component: CallPage,
+});
 
 const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }] };
 
