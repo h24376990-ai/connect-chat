@@ -3,8 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ADMIN_EMAIL = "ht110111@icloud.com";
-const ADMIN_PASSWORD = "mokou1101";
+const INTERNAL_EMAIL_DOMAIN = "users.tsunagari.local";
 
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
