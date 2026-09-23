@@ -7,6 +7,7 @@ import { ProfileDetailModal } from "@/components/profile-detail-modal";
 import { ProfileEditor } from "@/components/profile-editor";
 import { THEME_COLORS, applyThemeColor } from "@/lib/theme";
 import { uploadUserMedia } from "@/lib/media";
+import { DeleteAccountButton } from "@/components/delete-account";
 
 
 type AuthorInfo = { id: string; display_name: string; avatar_url: string | null; background_url: string | null; bio: string | null; age: number | null; gender: string | null; hobby_tags: string[]; username: string };
