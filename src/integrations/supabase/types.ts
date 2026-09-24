@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       communities: {
         Row: {
           created_at: string
@@ -642,6 +663,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_community_manager: {
+        Args: { _cid: string; _uid: string }
+        Returns: boolean
+      }
+      is_community_member: {
+        Args: { _cid: string; _uid: string }
         Returns: boolean
       }
       is_conversation_member: {
