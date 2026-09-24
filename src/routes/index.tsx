@@ -2,10 +2,21 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+const SITE_URL = "https://tsuna-chat-hub.lovable.app";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "ブラウザチャット【サクチャ】｜登録不要で今すぐ話せる無料ツール" },
+      { name: "description", content: "アカウント登録やアプリのインストールは一切不要！URLを発行して相手に送るだけで、ブラウザ上ですぐにリアルタイムチャットが始められる無料ツール「サクチャ」です。履歴も残らない安心設計。" },
+      { property: "og:title", content: "ブラウザチャット【サクチャ】｜登録不要で今すぐ話せる無料ツール" },
+      { property: "og:description", content: "アカウント登録やアプリのインストールは一切不要！URLを発行して相手に送るだけで、ブラウザ上ですぐにリアルタイムチャットが始められる無料ツール「サクチャ」です。履歴も残らない安心設計。" },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: SITE_URL }],
+  }),
   component: Index,
 });
 
