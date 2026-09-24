@@ -52,6 +52,13 @@ function HomePage() {
   const [themeColor, setThemeColor] = useState<string>("#25B7A5");
   const [status, setStatus] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [announcements, setAnnouncements] = useState<{ id: string; body: string; created_at: string }[]>([]);
+  useEffect(() => {
+    const loadAnn = async () => { const { data } = await supabase.from("announcements").select("id,body,created_at").order("created_at", { ascending: false }).limit(20); setAnnouncements(data ?? []); };
+    loadAnn();
+    const ch = supabase.channel(`ann-${user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, loadAnn).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user.id]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -381,8 +388,13 @@ function HomePage() {
     </main>}
     {tab === "notifications" && <main className="simple-view">
       <div className="page-title"><Bell /><div><p>あなたへのお知らせ</p><h2>通知</h2></div></div>
+      {announcements.map((a) => <article key={a.id} className="announce-box">
+        <b>📢 運営からのお知らせ</b>
+        <p>{a.body}</p>
+        <span>{new Date(a.created_at).toLocaleString("ja-JP")}</span>
+      </article>)}
       {unread > 0 && <button className="ghost-pill" onClick={markNotificationsRead} style={{ alignSelf: "flex-end" }}>すべて既読</button>}
-      {notifications.length === 0 ? <div className="empty-panel"><Bell /><h3>通知はまだありません</h3><p>メッセージ、申請、いいね、コメントをここで確認できます。</p></div> :
+      {notifications.length === 0 ? (announcements.length ? null : <div className="empty-panel"><Bell /><h3>通知はまだありません</h3><p>メッセージ、申請、いいね、コメントをここで確認できます。</p></div>) :
         <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {notifications.map((n) => <article key={n.id} className={`card-tile ${n.read_at ? "card-tile-blue" : "card-tile-magenta"}`} style={{ padding: 14 }}>
             <h4 className="card-tile-title" style={{ fontSize: 14 }}>{n.title}</h4>

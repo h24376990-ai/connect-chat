@@ -391,3 +391,8 @@
   padding: 14px;
   box-shadow: 0 8px 20px rgba(14, 74, 72, 0.08);
 }
+.announce-box { background: #FFF9DB; border: 2px solid #F5E08A; border-radius: 14px; padding: 12px 14px; color: #6B5A10; display: flex; flex-direction: column; gap: 4px; }
+.announce-box p { margin: 0; white-space: pre-wrap; font-size: 14px; }
+.announce-box span { font-size: 11px; opacity: .7; }
+.announce-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.announce-form textarea { min-height: 80px; padding: 10px; border-radius: 12px; border: 1px solid #DDECE8; font: inherit; }
