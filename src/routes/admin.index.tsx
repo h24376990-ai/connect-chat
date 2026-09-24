@@ -25,7 +25,7 @@ function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [tab, setTab] = useState<"stats" | "messages" | "media" | "users" | "feedback">("stats");
+  const [tab, setTab] = useState<"stats" | "messages" | "media" | "users" | "feedback" | "announce">("stats");
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [err, setErr] = useState("");
 
@@ -48,7 +48,38 @@ function AdminDashboardPage() {
     try { const m = await adminListMessages({ data: { mediaOnly: true, limit: 100 } }); setMessages(m as Message[]); } catch (e) { setErr(e instanceof Error ? e.message : ""); }
   }
 
-  useEffect(() => { loadAll(); }, []);
+  const [anns, setAnns] = useState<{ id: string; body: string; created_at: string }[]>([]);
+  const [annText, setAnnText] = useState("");
+  async function loadAnns() {
+    const { data } = await supabase.from("announcements").select("id,body,created_at").order("created_at", { ascending: false });
+    setAnns(data ?? []);
+  }
+  async function sendAnn() {
+    const body = annText.trim(); if (!body) return;
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from("announcements").insert({ body, author_id: u.user!.id });
+    if (error) { setErr(error.message); return; }
+    setAnnText(""); loadAnns();
+  }
+  async function deleteAnn(id: string) {
+    if (!confirm("このアナウンスを削除しますか？")) return;
+    const { error } = await supabase.from("announcements").delete().eq("id", id);
+    if (error) setErr(error.message); else loadAnns();
+  }
+
+  useEffect(() => {
+    loadAll(); loadAnns();
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const refresh = () => { clearTimeout(t); t = setTimeout(async () => {
+      try { const [s, u] = await Promise.all([adminStats(), adminListUsers()]); setStats(s); setUsers(u as UserRow[]); } catch { /* ignore */ }
+    }, 500); };
+    const ch = supabase.channel("admin-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, refresh)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, refresh)
+      .subscribe();
+    const iv = setInterval(refresh, 30000);
+    return () => { supabase.removeChannel(ch); clearInterval(iv); clearTimeout(t); };
+  }, []);
 
   async function logout() { await supabase.auth.signOut(); navigate({ to: "/admin/login" }); }
 
@@ -63,8 +94,23 @@ function AdminDashboardPage() {
       <button className={tab === "messages" ? "active" : ""} onClick={() => { setTab("messages"); loadAll(); }}>チャット履歴</button>
       <button className={tab === "feedback" ? "active" : ""} onClick={() => { setTab("feedback"); loadFeedback(); }}>意見箱</button>
       <button className={tab === "media" ? "active" : ""} onClick={() => { setTab("media"); loadMedia(); }}>写真・動画</button>
+      <button className={tab === "announce" ? "active" : ""} onClick={() => { setTab("announce"); loadAnns(); }}>アナウンス</button>
     </nav>
     {err && <p className="form-notice">{err}</p>}
+    {tab === "announce" && <section className="admin-list">
+      <div className="announce-form">
+        <textarea value={annText} onChange={(e) => setAnnText(e.target.value)} maxLength={1000} placeholder="全ユーザーの通知画面に表示するお知らせ" />
+        <button className="pill-primary" onClick={sendAnn} disabled={!annText.trim()}>全員に送信</button>
+      </div>
+      {anns.length === 0 && <p>送信済みのアナウンスはありません</p>}
+      {anns.map((a) => <div key={a.id} className="announce-box">
+        <p>{a.body}</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>{new Date(a.created_at).toLocaleString("ja-JP")}</span>
+          <button className="ghost-pill" style={{ color: "#D33" }} onClick={() => deleteAnn(a.id)}>削除</button>
+        </div>
+      </div>)}
+    </section>}
     {tab === "stats" && stats && <section className="admin-grid">
       <StatCard label="登録ユーザー" value={stats.users} icon={<Users />} />
       <StatCard label="オンライン" value={stats.onlineUsers} icon={<Users />} />
