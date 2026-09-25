@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /call/
+Disallow: /chat/
+Disallow: /profile/
 
 Sitemap: https://tsuna-chat-hub.lovable.app/sitemap.xml
