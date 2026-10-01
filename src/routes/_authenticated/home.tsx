@@ -1,3 +1,4 @@
+import { DiscoverUsers } from "@/components/discover-users";
 import { FormEvent, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, ImagePlus, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, Settings, User, UsersRound } from "lucide-react";
@@ -221,7 +222,7 @@ function HomePage() {
     { key: "profile", label: "プロフィール", tone: "cyan", icon: <User />, onClick: () => setTab("profile"), extra: <div className="tile-mini"><span className="tile-mini-avatar">{initial.slice(0, 2)}</span><small>プロフィールを見る</small></div> },
     { key: "recruit", label: "フレンド募集", tone: "green", icon: <Megaphone />, onClick: () => setTab("search") },
     { key: "community", label: "コミュニティ", tone: "purple", icon: <UsersRound />, onClick: () => setTab("community") },
-    { key: "friends", label: "フレンド", tone: "pink", icon: <User />, onClick: () => setTab("search") },
+    { key: "friends", label: "探す", tone: "pink", icon: <User />, onClick: () => setTab("search") },
     { key: "chat", label: "チャット", tone: "orange", icon: <MessageCircle />, onClick: () => setTab("chat") },
     { key: "cchat", label: "コミュニティチャット", tone: "blue", icon: <MessagesSquare />, onClick: () => setTab("chat") },
     { key: "timeline", label: "タイムライン", tone: "teal", icon: <Globe />, onClick: () => { setPostPage(1); setTab("timeline"); } },
@@ -295,39 +296,9 @@ function HomePage() {
       </>}
 
       <div className="discover-section-head">
-        <div><span className="discover-eyebrow">RECRUITS</span><h3>フレンド募集</h3></div>
-        <button className="ghost-pill" onClick={() => setModal("recruit")}><CirclePlus size={16} />投稿</button>
+        <div><span className="discover-eyebrow">USERS</span><h3>登録者を探す</h3></div>
       </div>
-      {(() => {
-        if (recruitments.length === 0) return <div className="empty-panel soft"><Megaphone /><p>まだ募集はありません。</p></div>;
-        const totalPages = Math.max(1, Math.ceil(recruitments.length / PAGE_SIZE));
-        const cur = Math.min(page, totalPages);
-        const slice = recruitments.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
-        const tones: TileTone[] = ["cyan", "green", "orange", "pink", "purple", "teal", "blue", "magenta"];
-        return <>
-          <section className="card-tile-grid">
-            {slice.map((item, i) => {
-              const tone = tones[i % tones.length];
-              const isMine = item.author_id === user.id;
-              const authorInitial = (item.author?.display_name ?? "?").slice(0, 1);
-              const alreadySent = sentRequests.has(item.author_id);
-              return <article key={item.id} className={`card-tile card-tile-${tone}`} onClick={() => !isMine && navigate({ to: "/u/$userId", params: { userId: item.author_id } })} style={{ cursor: isMine ? "default" : "pointer" }}>
-                <span className="tile-blob" aria-hidden="true" />
-                <header className="card-tile-head">
-                  <button type="button" className={`tile-icon tile-icon-${tone}`} onClick={(e) => { e.stopPropagation(); if (item.author) setDetailProfile(item.author); }} style={{ border: "none", padding: 0, cursor: "pointer" }}>{item.author?.avatar_url ? <img src={item.author.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : authorInitial}</button>
-                  <span className="card-tile-meta">{isMine ? "自分" : (item.author?.display_name ?? "匿名")}・{new Date(item.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}</span>
-                </header>
-                <h4 className="card-tile-title">{item.title}</h4>
-                {item.body && <p className="card-tile-body">{item.body}</p>}
-                {isMine
-                  ? <button className="pill-primary" style={{ marginTop: 8 }} disabled>自分の募集</button>
-                  : <button className="pill-primary" style={{ marginTop: 8 }} disabled={alreadySent} onClick={(e) => { e.stopPropagation(); applyFriendRequest(item.author_id); }}>{alreadySent ? "申請済み" : "申請する！"}</button>}
-              </article>;
-            })}
-          </section>
-          {totalPages > 1 && <div className="pager"><button className="ghost-pill" disabled={cur <= 1} onClick={() => setPage(cur - 1)}>← 前</button><span className="pager-info">{cur} / {totalPages}</span><button className="ghost-pill" disabled={cur >= totalPages} onClick={() => setPage(cur + 1)}>次 →</button></div>}
-        </>;
-      })()}
+      <DiscoverUsers userId={user.id} />
     </main>}
     {tab === "timeline" && <main className="simple-view discover-view">
       <div className="page-title"><Globe /><div><p>みんなの投稿</p><h2>タイムライン</h2></div></div>
