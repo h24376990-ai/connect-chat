@@ -690,6 +690,7 @@ export type Database = {
         Args: { _community_id: string; _new_owner_id: string }
         Returns: undefined
       }
+      username_blocked_until: { Args: { _username: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
