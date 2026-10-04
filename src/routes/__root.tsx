@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "google-site-verification", content: "zqOQt_c7C4DTsRaD3sdJIvwJzhiEPNpZQ_J8r8j66fc" },
+      { name: "google-site-verification", content: "bnJhebdMilwSg3asfMcYCybf1_EgKua5IRqFewNm16k" },
       { title: "ブラウザチャット【サクチャ】｜登録不要で今すぐ話せる無料ツール" },
       { name: "description", content: "アカウント登録やアプリのインストールは一切不要！URLを発行して相手に送るだけで、ブラウザ上ですぐにリアルタイムチャットが始められる無料ツール「サクチャ」です。履歴も残らない安心設計。" },
       { name: "author", content: "ブラウザチャット【サクチャ】" },
