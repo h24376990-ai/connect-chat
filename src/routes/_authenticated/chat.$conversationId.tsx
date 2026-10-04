@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
       { property: "og:description", content: "テキスト・画像・動画を送ってフレンドとリアルタイムチャット。" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: `https://tsuna-chat-hub.lovable.app/chat/${params.conversationId}` }],
+    links: [{ rel: "canonical", href: `https://tsunagari-chat.vercel.app/chat/${params.conversationId}` }],
   }),
   component: ChatPage,
 });

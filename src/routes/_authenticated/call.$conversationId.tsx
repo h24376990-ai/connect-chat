@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/call/$conversationId")({
       { property: "og:description", content: "ブラウザ上でフレンドとすぐに音声通話を始められます。" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: `https://tsuna-chat-hub.lovable.app/call/${params.conversationId}` }],
+    links: [{ rel: "canonical", href: `https://tsunagari-chat.vercel.app/call/${params.conversationId}` }],
   }),
   component: CallPage,
 });

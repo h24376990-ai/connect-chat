@@ -6,4 +6,4 @@ Disallow: /call/
 Disallow: /chat/
 Disallow: /profile/
 
-Sitemap: https://tsuna-chat-hub.lovable.app/sitemap.xml
+Sitemap: https://tsunagari-chat.vercel.app/sitemap.xml
