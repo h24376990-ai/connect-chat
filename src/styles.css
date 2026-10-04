@@ -396,3 +396,17 @@
 .announce-box span { font-size: 11px; opacity: .7; }
 .announce-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 .announce-form textarea { min-height: 80px; padding: 10px; border-radius: 12px; border: 1px solid #DDECE8; font: inherit; }
+
+/* Call invites & video call */
+.call-return-bar { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; border: 0; padding: 8px 12px; background: var(--color-primary, #25B7A5); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.call-msg { width: 230px; border-radius: 16px; overflow: hidden; background: #fff; color: #0E4A48; box-shadow: 0 1px 3px rgba(0,0,0,.1); border: 1px solid #DDECE8; }
+.call-msg-top { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 14px 12px; font-weight: 800; background: #EAF7F4; }
+.call-msg-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; min-height: 44px; }
+.call-msg-bottom time, .call-msg-note { font-size: 11px; opacity: .6; margin-left: auto; }
+.call-msg-btn { flex: 1; border: 0; border-radius: 999px; padding: 8px 0; font-weight: 800; color: #fff; cursor: pointer; }
+.call-msg-btn.accept { background: #22A35A; }
+.call-msg-btn.decline { background: #E5484D; }
+.call-remote-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
+.call-local-video { position: absolute; top: calc(16px + env(safe-area-inset-top)); right: 16px; width: 110px; height: 150px; object-fit: cover; border-radius: 14px; border: 2px solid rgba(255,255,255,.7); background: #000; z-index: 2; transform: scaleX(-1); }
+.call-page .call-inner { position: relative; z-index: 1; }
+.call-page:has(.call-remote-video) .call-inner { align-self: end; padding-bottom: calc(32px + env(safe-area-inset-bottom)); text-shadow: 0 1px 4px rgba(0,0,0,.5); }
