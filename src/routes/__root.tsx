@@ -96,14 +96,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "ブラウザチャット【サクチャ】",
-          url: "https://tsuna-chat-hub.lovable.app",
+          url: "https://tsunagari-chat.vercel.app",
           inLanguage: "ja",
           description:
             "アカウント登録やアプリのインストールは一切不要！URLを発行して相手に送るだけで、ブラウザ上ですぐにリアルタイムチャットが始められる無料ツール「サクチャ」です。",
           publisher: {
             "@type": "Organization",
             name: "ブラウザチャット【サクチャ】",
-            url: "https://tsuna-chat-hub.lovable.app",
+            url: "https://tsunagari-chat.vercel.app",
           },
         }),
       },

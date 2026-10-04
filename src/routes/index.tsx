@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
-const SITE_URL = "https://tsuna-chat-hub.lovable.app";
+const SITE_URL = "https://tsunagari-chat.vercel.app";
 
 export const Route = createFileRoute("/")({
   head: () => ({

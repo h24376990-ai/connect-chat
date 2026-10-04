@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const BASE_URL = "https://tsuna-chat-hub.lovable.app";
+const BASE_URL = "https://tsunagari-chat.vercel.app";
 
 interface SitemapEntry {
   path: string;
