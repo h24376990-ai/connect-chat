@@ -18,16 +18,16 @@ export const Route = createFileRoute("/_authenticated/u/$userId")({
       { property: "og:description", content: "プロフィールを見てフレンド申請やチャットを始めましょう。" },
       { property: "og:type", content: "profile" },
     ],
-    links: [{ rel: "canonical", href: `https://tsuna-chat-hub.lovable.app/u/${params.userId}` }],
+    links: [{ rel: "canonical", href: `https://tsunagari-chat.vercel.app/u/${params.userId}` }],
     scripts: [
       {
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "ProfilePage",
-          url: `https://tsuna-chat-hub.lovable.app/u/${params.userId}`,
+          url: `https://tsunagari-chat.vercel.app/u/${params.userId}`,
           inLanguage: "ja",
-          isPartOf: { "@type": "WebSite", name: "ブラウザチャット【サクチャ】", url: "https://tsuna-chat-hub.lovable.app" },
+          isPartOf: { "@type": "WebSite", name: "ブラウザチャット【サクチャ】", url: "https://tsunagari-chat.vercel.app" },
         }),
       },
     ],

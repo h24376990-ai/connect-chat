@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/profile/edit")({
       { property: "og:description", content: "表示名、ひとこと、年齢、趣味、アイコン、背景画像を変更できます。" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "https://tsuna-chat-hub.lovable.app/profile/edit" }],
+    links: [{ rel: "canonical", href: "https://tsunagari-chat.vercel.app/profile/edit" }],
   }),
   component: ProfileEditPage,
 });

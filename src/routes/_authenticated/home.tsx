@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/home")({
       { property: "og:title", content: "ホーム | ブラウザチャット【サクチャ】" },
       { property: "og:description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるホーム画面。" },
     ],
-    links: [{ rel: "canonical", href: "https://tsuna-chat-hub.lovable.app/home" }],
+    links: [{ rel: "canonical", href: "https://tsunagari-chat.vercel.app/home" }],
   }),
   component: HomePage,
 });
