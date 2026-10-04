@@ -686,6 +686,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["membership_status"]
       }
       send_friend_request: { Args: { _addressee: string }; Returns: undefined }
+      set_call_status: {
+        Args: { _message_id: string; _status: string }
+        Returns: undefined
+      }
       transfer_community_owner: {
         Args: { _community_id: string; _new_owner_id: string }
         Returns: undefined
