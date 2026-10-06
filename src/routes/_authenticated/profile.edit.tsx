@@ -16,9 +16,9 @@ const THEME_COLORS = ["#25B7A5", "#7CC77A", "#B47CE0", "#F09EBB", "#F0A85C", "#5
 export const Route = createFileRoute("/_authenticated/profile/edit")({
   head: () => ({
     meta: [
-      { title: "プロフィール編集 | ブラウザチャット【サクチャ】" },
-      { name: "description", content: "ブラウザチャット【サクチャ】のプロフィール編集画面。表示名、ひとこと、年齢、趣味、アイコン、背景画像を変更できます。" },
-      { property: "og:title", content: "プロフィール編集 | ブラウザチャット【サクチャ】" },
+      { title: "プロフィール編集 | ブラウザチャット【Convo】" },
+      { name: "description", content: "ブラウザチャット【Convo】のプロフィール編集画面。表示名、ひとこと、年齢、趣味、アイコン、背景画像を変更できます。" },
+      { property: "og:title", content: "プロフィール編集 | ブラウザチャット【Convo】" },
       { property: "og:description", content: "表示名、ひとこと、年齢、趣味、アイコン、背景画像を変更できます。" },
       { property: "og:type", content: "website" },
     ],

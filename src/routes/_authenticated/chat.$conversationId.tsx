@@ -23,9 +23,9 @@ const CALL_LABEL: Record<string, string> = {
 export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
   head: ({ params }) => ({
     meta: [
-      { title: "チャット | ブラウザチャット【サクチャ】" },
-      { name: "description", content: "ブラウザチャット【サクチャ】の1対1リアルタイムチャット。テキスト・画像・動画を送ってフレンドと楽しく会話できます。" },
-      { property: "og:title", content: "チャット | ブラウザチャット【サクチャ】" },
+      { title: "チャット | ブラウザチャット【Convo】" },
+      { name: "description", content: "ブラウザチャット【Convo】の1対1リアルタイムチャット。テキスト・画像・動画を送ってフレンドと楽しく会話できます。" },
+      { property: "og:title", content: "チャット | ブラウザチャット【Convo】" },
       { property: "og:description", content: "テキスト・画像・動画を送ってフレンドとリアルタイムチャット。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -7,8 +7,8 @@ import { adminSignIn } from "@/lib/admin.functions";
 export const Route = createFileRoute("/admin/login")({
   head: () => ({
     meta: [
-      { title: "管理者ログイン | ブラウザチャット【サクチャ】" },
-      { name: "description", content: "ブラウザチャット【サクチャ】の管理者ログイン画面。" },
+      { title: "管理者ログイン | ブラウザチャット【Convo】" },
+      { name: "description", content: "ブラウザチャット【Convo】の管理者ログイン画面。" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

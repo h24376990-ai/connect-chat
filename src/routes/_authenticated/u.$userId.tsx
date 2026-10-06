@@ -12,9 +12,9 @@ type FriendshipStatus = "none" | "pending_out" | "pending_in" | "accepted" | "se
 export const Route = createFileRoute("/_authenticated/u/$userId")({
   head: ({ params }) => ({
     meta: [
-      { title: "ユーザープロフィール | ブラウザチャット【サクチャ】" },
-      { name: "description", content: "ブラウザチャット【サクチャ】のユーザープロフィール。ひとこと、趣味、募集中のメッセージを見てフレンド申請できます。" },
-      { property: "og:title", content: "ユーザープロフィール | ブラウザチャット【サクチャ】" },
+      { title: "ユーザープロフィール | ブラウザチャット【Convo】" },
+      { name: "description", content: "ブラウザチャット【Convo】のユーザープロフィール。ひとこと、趣味、募集中のメッセージを見てフレンド申請できます。" },
+      { property: "og:title", content: "ユーザープロフィール | ブラウザチャット【Convo】" },
       { property: "og:description", content: "プロフィールを見てフレンド申請やチャットを始めましょう。" },
       { property: "og:type", content: "profile" },
     ],
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/u/$userId")({
           "@type": "ProfilePage",
           url: `https://tsunagari-chat.vercel.app/u/${params.userId}`,
           inLanguage: "ja",
-          isPartOf: { "@type": "WebSite", name: "ブラウザチャット【サクチャ】", url: "https://tsunagari-chat.vercel.app" },
+          isPartOf: { "@type": "WebSite", name: "ブラウザチャット【Convo】", url: "https://tsunagari-chat.vercel.app" },
         }),
       },
     ],
