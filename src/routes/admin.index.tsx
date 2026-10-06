@@ -7,8 +7,8 @@ import { adminListFeedback, adminListMessages, adminListUsers, adminStats } from
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "管理画面 | ブラウザチャット【サクチャ】" },
-      { name: "description", content: "ブラウザチャット【サクチャ】の管理画面（非公開）。" },
+      { title: "管理画面 | ブラウザチャット【Convo】" },
+      { name: "description", content: "ブラウザチャット【Convo】の管理画面（非公開）。" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -85,7 +85,7 @@ function AdminDashboardPage() {
 
   return <div className="admin-wrap">
     <header className="admin-header">
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}><ShieldCheck /><h1>ブラウザチャット【サクチャ】 管理サイト</h1></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}><ShieldCheck /><h1>ブラウザチャット【Convo】 管理サイト</h1></div>
       <button className="secondary-action" onClick={logout}><LogOut size={14} /> ログアウト</button>
     </header>
     <nav className="admin-tabs">

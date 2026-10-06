@@ -6,9 +6,9 @@ import { useCall } from "@/lib/call-context";
 export const Route = createFileRoute("/_authenticated/call/$conversationId")({
   head: ({ params }) => ({
     meta: [
-      { title: "通話 | ブラウザチャット【サクチャ】" },
-      { name: "description", content: "ブラウザチャット【サクチャ】の音声・ビデオ通話機能。ブラウザ上でフレンドとすぐに通話を始められます。" },
-      { property: "og:title", content: "通話 | ブラウザチャット【サクチャ】" },
+      { title: "通話 | ブラウザチャット【Convo】" },
+      { name: "description", content: "ブラウザチャット【Convo】の音声・ビデオ通話機能。ブラウザ上でフレンドとすぐに通話を始められます。" },
+      { property: "og:title", content: "通話 | ブラウザチャット【Convo】" },
       { property: "og:description", content: "ブラウザ上でフレンドとすぐに音声・ビデオ通話を始められます。" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

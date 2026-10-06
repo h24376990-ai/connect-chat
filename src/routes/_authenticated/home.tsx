@@ -29,9 +29,9 @@ function isVideoUrl(url: string) {
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({
     meta: [
-      { title: "ホーム | ブラウザチャット【サクチャ】" },
-      { name: "description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるブラウザチャット【サクチャ】のホーム画面です。" },
-      { property: "og:title", content: "ホーム | ブラウザチャット【サクチャ】" },
+      { title: "ホーム | ブラウザチャット【Convo】" },
+      { name: "description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるブラウザチャット【Convo】のホーム画面です。" },
+      { property: "og:title", content: "ホーム | ブラウザチャット【Convo】" },
       { property: "og:description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるホーム画面。" },
     ],
     links: [{ rel: "canonical", href: "https://tsunagari-chat.vercel.app/home" }],
