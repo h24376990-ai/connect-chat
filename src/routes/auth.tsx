@@ -10,7 +10,7 @@ function internalEmailFor(username: string) {
 }
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "ログイン | ブラウザチャット【Convo】" }, { name: "description", content: "ブラウザチャット【Convo】へユーザーIDでログイン、新規登録できます。" }] }),
+  head: () => ({ meta: [{ title: "ログイン | ブラウザチャット【Convo】" }, { name: "description", content: "ブラウザチャット【Convo】へユーザーIDでログイン、新規登録できます。" }, { property: "og:title", content: "ログイン | ブラウザチャット【Convo】" }, { property: "og:description", content: "ブラウザチャット【Convo】へユーザーIDでログイン、新規登録できます。" }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: AuthPage,
 });
 

@@ -17,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/u/$userId")({
       { property: "og:title", content: "ユーザープロフィール | ブラウザチャット【Convo】" },
       { property: "og:description", content: "プロフィールを見てフレンド申請やチャットを始めましょう。" },
       { property: "og:type", content: "profile" },
+      { name: "twitter:card", content: "summary" },
     ],
     links: [{ rel: "canonical", href: `https://tsunagari-chat.vercel.app/u/${params.userId}` }],
     scripts: [
