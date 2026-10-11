@@ -33,6 +33,8 @@ export const Route = createFileRoute("/_authenticated/home")({
       { name: "description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるブラウザチャット【Convo】のホーム画面です。" },
       { property: "og:title", content: "ホーム | ブラウザチャット【Convo】" },
       { property: "og:description", content: "フレンド募集、コミュニティ、タイムライン、チャットをまとめて確認できるホーム画面。" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
     links: [{ rel: "canonical", href: "https://tsunagari-chat.vercel.app/home" }],
   }),

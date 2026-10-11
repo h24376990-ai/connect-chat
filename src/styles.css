@@ -28,6 +28,7 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
   --color-background: var(--background);
+  --color-overlay: var(--overlay);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -64,6 +65,7 @@
 
 :root {
   --radius: 1rem;
+  --overlay: oklch(0.15 0.02 190 / 0.45);
   --background: oklch(0.97 0.02 210);
   --foreground: oklch(0.2 0.02 240);
   --card: oklch(1 0 0);
@@ -101,6 +103,7 @@
 }
 
 .dark {
+  --overlay: oklch(0.08 0.01 240 / 0.65);
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(0.208 0.042 265.755);
@@ -152,6 +155,14 @@
 }
 
 @layer components {
+  .profile-bottom-sheet { height: 85dvh; max-height: 92dvh; width: min(100%, 520px); margin-inline: auto; margin-top: 0; overflow: hidden; }
+  .profile-bottom-sheet > div:first-child { width: 36px; height: 4px; margin-top: 12px; margin-bottom: 4px; flex-shrink: 0; background: var(--border); }
+  .profile-sheet-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .profile-sheet-cover { height: 150px; width: 100%; background: var(--secondary); }
+  .profile-sheet-avatar { width: 88px; height: 88px; border: 4px solid var(--background); border-radius: 50%; background: var(--accent); color: var(--accent-foreground); display: grid; place-items: center; overflow: hidden; font-size: 30px; font-weight: 800; margin-top: -44px; position: relative; }
+  @media (prefers-reduced-motion: reduce) {
+    .profile-bottom-sheet[data-vaul-drawer], .profile-bottom-sheet ~ [data-vaul-overlay], [data-vaul-overlay] { animation: none !important; transition: none !important; }
+  }
   .splash-screen { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 12px; background: var(--background); }
   .splash-screen h1 { margin: 0; font-size: 24px; } .splash-screen p { margin: 0; color: var(--muted-foreground); font-size: 13px; }
   .brand-mark { width: 58px; height: 58px; position: relative; display: grid; place-items: center; }

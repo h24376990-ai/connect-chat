@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/profile/edit")({
       { property: "og:title", content: "プロフィール編集 | ブラウザチャット【Convo】" },
       { property: "og:description", content: "表示名、ひとこと、年齢、趣味、アイコン、背景画像を変更できます。" },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
     links: [{ rel: "canonical", href: "https://tsunagari-chat.vercel.app/profile/edit" }],
   }),
