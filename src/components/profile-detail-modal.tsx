@@ -16,7 +16,7 @@ const GENDER: Record<string, string> = { male: "男性", female: "女性", other
 export function ProfileDetailModal({ profile, onClose }: Props) {
   const initial = profile.display_name?.slice(0, 1) ?? "?";
   return <Drawer open onOpenChange={(open) => { if (!open) onClose(); }} shouldScaleBackground={false}>
-    <DrawerContent className="profile-bottom-sheet" aria-describedby="profile-sheet-description">
+    <DrawerContent className="profile-bottom-sheet h-[85dvh] max-h-[92dvh] mt-0" aria-describedby="profile-sheet-description">
       <div className="flex shrink-0 items-center justify-between px-5 py-2">
         <span className="text-sm font-bold text-muted-foreground">プロフィール</span>
         <DrawerClose asChild>
