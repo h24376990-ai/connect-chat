@@ -118,7 +118,18 @@ function HomePage() {
     setNotifications((notifListRes.data ?? []) as Notification[]);
     setFriendRequests(reqs);
     setFriends(fs);
-    setCommunities((communityRes.data ?? []) as Community[]);
+    // チャンネル関連の追加や古いスキーマの影響で一覧取得だけが失敗しても、
+    // コミュニティ本体は表示できるように段階的にフォールバックする。
+    let communityRows = (communityRes.data ?? []) as unknown as Community[];
+    if (communityRes.error) {
+      const fallback = await supabase
+        .from("communities")
+        .select("id,owner_id,name,description,image_url,created_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      communityRows = (fallback.data ?? []) as unknown as Community[];
+    }
+    setCommunities(communityRows);
     setCommunityMemberships(new Map(((membershipRes.data ?? []) as CommunityMembership[]).map((m) => [m.community_id, m.status])));
     const sent = new Set<string>();
     allFriendships.forEach((f) => { const other = f.requester_id === user.id ? f.addressee_id : f.requester_id; if (f.status === "pending" || f.status === "accepted") sent.add(other); });
