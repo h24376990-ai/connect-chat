@@ -8,6 +8,7 @@ import { formatUserNumber, loadUserNumbers } from "@/lib/user-number";
 
 type Message = { id: string; sender_id: string; kind: "text" | "image" | "video" | "system"; body: string | null; media_url: string | null; created_at: string; pending?: boolean };
 type Member = { user_id: string; display_name: string; avatar_url: string | null; user_number?: string };
+type Channel = { id: string; name: string; description: string | null };
 
 const MAX_IMAGE = 10 * 1024 * 1024;
 const MAX_VIDEO = 50 * 1024 * 1024;
@@ -50,6 +51,8 @@ function ChatPage() {
   const call = useCall();
   const [messages, setMessages] = useState<Message[]>([]);
   const [members, setMembers] = useState<Map<string, Member>>(new Map());
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [communityId, setCommunityId] = useState<string | null>(null);
   const [userNumbers, setUserNumbers] = useState<Map<string, string>>(new Map());
   const [status, setStatus] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -75,6 +78,15 @@ function ChatPage() {
   useEffect(() => {
     let alive = true;
     (async () => {
+      const { data: conversation } = await supabase.from("conversations").select("kind,community_id,channel_id").eq("id", conversationId).maybeSingle();
+      if (conversation?.kind === "community" && conversation.community_id) {
+        setCommunityId(conversation.community_id);
+        const { data: channelRows } = await supabase.from("community_channels").select("id,name,description").eq("community_id", conversation.community_id).order("created_at");
+        setChannels((channelRows ?? []) as Channel[]);
+      } else {
+        setCommunityId(null);
+        setChannels([]);
+      }
       const { data, error } = await supabase.from("messages").select(COLS).eq("conversation_id", conversationId).order("created_at").limit(500);
       if (!alive) return;
       if (error) { setStatus(error.message); return; }
@@ -137,6 +149,12 @@ function ChatPage() {
     }
   }
 
+  async function switchChannel(channelId: string) {
+    const { data, error } = await supabase.rpc("get_community_channel_conversation", { _channel_id: channelId });
+    if (error || !data) { setStatus(error?.message ?? "チャンネルを開けませんでした"); return; }
+    navigate({ to: "/chat/$conversationId", params: { conversationId: data } });
+  }
+
   const goCall = () => navigate({ to: "/call/$conversationId", params: { conversationId } });
   const inThisCall = call.conversationId === conversationId && ["ringing", "connecting", "active"].includes(call.phase);
   const busyElsewhere = !inThisCall && ["ringing", "connecting", "active"].includes(call.phase);
@@ -160,6 +178,9 @@ function ChatPage() {
       <h1 className="home-hello" style={{ fontSize: 18 }}>チャット</h1>
       <button className="round-btn" aria-label="通話" onClick={onCallButton}><Phone size={18} /></button>
     </header>
+    {channels.length > 0 && <nav className="community-channel-tabs" aria-label="コミュニティのチャット欄">
+      {channels.map((channel) => <button key={channel.id} className="community-channel-tab" onClick={() => switchChannel(channel.id)}>{channel.name}</button>)}
+    </nav>}
     {inThisCall && <button className="call-return-bar" onClick={goCall}>
       <PhoneCall size={16} /> {call.phase === "ringing" ? "相手の応答を待っています" : call.phase === "active" ? "通話中" : "接続中"} — タップで通話画面に戻る
     </button>}

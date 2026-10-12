@@ -211,7 +211,10 @@
   .profile-hero { padding: 30px 0; display: grid; justify-items: center; } .profile-hero h2 { margin: 10px 0 2px; } .profile-hero > p { margin: 0; color: var(--muted-foreground); font-size: 12px; }
   .settings-row { width: 100%; border: 0; border-bottom: 1px solid var(--border); background: var(--card); padding: 16px 12px; display: grid; grid-template-columns: 24px 1fr 24px; align-items: center; text-align: left; font-size: 12px; }
   .modal-backdrop { position: fixed; inset: 0; background: oklch(0.15 0.02 190 / .45); z-index: 50; display: flex; align-items: end; justify-content: center; }
-  .modal-sheet { width: min(100%,520px); max-height: 88dvh; overflow-y: auto; background: var(--background); border-radius: 14px 14px 0 0; padding: 10px 20px calc(22px + env(safe-area-inset-bottom)); box-sizing: border-box; }
+  .modal-sheet { width: min(100%,520px); max-height: 88dvh; min-height: 82dvh; overflow-y: auto; background: var(--background); border-radius: 22px 22px 0 0; padding: 10px 20px calc(22px + env(safe-area-inset-bottom)); box-sizing: border-box; }
+  .community-channel-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px; background: var(--card); border-bottom: 1px solid var(--border); scrollbar-width: none; }
+  .community-channel-tab { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 999px; background: var(--secondary); color: var(--foreground); padding: 8px 14px; font-size: 12px; font-weight: 700; }
+  .community-channel-tab:first-child { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
   .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 18px; } .modal-sheet h2 { margin: 0 0 18px; font-size: 19px; } .modal-sheet textarea { min-height: 100px; resize: vertical; } .two-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .form-hint { font-size: 10px; color: var(--muted-foreground); background: var(--secondary); padding: 10px; border-radius: 6px; }
   .secondary-action { margin-top: 10px; width: 100%; border: 1px solid var(--border); background: var(--card); color: var(--foreground); min-height: 44px; border-radius: 8px; }
 }

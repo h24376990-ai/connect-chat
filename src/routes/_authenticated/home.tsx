@@ -16,7 +16,7 @@ type AuthorInfo = { id: string; display_name: string; avatar_url: string | null;
 type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; background_url: string | null; bio: string | null; hobby_tags: string[]; theme_color: string };
 type Recruitment = { id: string; author_id: string; title: string; body: string | null; created_at: string; author?: AuthorInfo | null };
 type Community = { id: string; owner_id: string; name: string; description: string | null; image_url: string | null; created_at: string; join_policy?: "open" | "approval" };
-type CommunityMembership = { community_id: string; status: "pending" | "approved" | "rejected" };
+type CommunityMembership = { community_id: string; status: "pending" | "approved" | "rejected"; role?: "member" | "admin" | "owner" };
 type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null };
 type FriendRequest = { id: string; requester_id: string; created_at: string; requester?: AuthorInfo | null };
 type Friend = { user_id: string; display_name: string; avatar_url: string | null };
@@ -87,8 +87,8 @@ function HomePage() {
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
       supabase.from("notifications").select("id,title,body,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
       supabase.from("friendships").select("id,requester_id,addressee_id,status,created_at").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
-      supabase.from("communities").select("id,owner_id,name,description,image_url,created_at").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(100),
-      supabase.from("community_members").select("community_id,status").eq("user_id", user.id),
+      supabase.from("communities").select("id,owner_id,name,description,image_url,join_policy,created_at").eq("is_dissolved", false).order("created_at", { ascending: false }).limit(100),
+      supabase.from("community_members").select("community_id,status,role").eq("user_id", user.id),
       supabase.from("posts").select("id,author_id,body,image_urls,created_at").order("created_at", { ascending: false }).limit(200),
     ]);
     setUserNumbers(numbers);
@@ -196,10 +196,20 @@ function HomePage() {
     setTimeout(() => setStatus(""), 2000);
   }
   async function openCommunityChat(communityId: string) {
-    const { data, error } = await supabase.rpc("get_community_conversation", { _community_id: communityId });
-    if (error || !data) { setStatus(error?.message ?? "開けませんでした"); return; }
+    const { data: channels, error: channelError } = await supabase.from("community_channels").select("id").eq("community_id", communityId).order("created_at").limit(1);
+    if (channelError) { setStatus(channelError.message); return; }
+    let conversationId: string | null = null;
+    if (channels?.[0]?.id) {
+      const { data, error } = await supabase.rpc("get_community_channel_conversation", { _channel_id: channels[0].id });
+      if (error) { setStatus(error.message); return; }
+      conversationId = data;
+    } else {
+      const { data, error } = await supabase.rpc("get_community_conversation", { _community_id: communityId });
+      if (error || !data) { setStatus(error?.message ?? "開けませんでした"); return; }
+      conversationId = data;
+    }
     setSelectedCommunity(null);
-    navigate({ to: "/chat/$conversationId", params: { conversationId: data } });
+    navigate({ to: "/chat/$conversationId", params: { conversationId } });
   }
 
   async function joinSelectedCommunity() {
@@ -219,7 +229,7 @@ function HomePage() {
   async function decideMember(communityId: string, uid: string, ok: boolean) {
     const { error } = await supabase.rpc("approve_community_member", { _community_id: communityId, _user_id: uid, _approved: ok });
     if (error) { setStatus(error.message); return; }
-    setStatus(ok ? "参加を承認しました" : "参加を拒否しました"); setTimeout(() => setStatus(""), 2000);
+    setStatus(ok ? "参加を承認���ました" : "参加を拒否しました"); setTimeout(() => setStatus(""), 2000);
     loadCommunityRequests();
   }
   async function submitPost(event: FormEvent<HTMLFormElement>) {
