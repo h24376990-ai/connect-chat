@@ -654,6 +654,10 @@ export type Database = {
         Args: { _community_id: string }
         Returns: undefined
       }
+      get_community_conversation: {
+        Args: { _community_id: string }
+        Returns: string
+      }
       get_or_create_direct_conversation: {
         Args: { _other: string }
         Returns: string
