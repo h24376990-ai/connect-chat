@@ -1,7 +1,7 @@
 import { DiscoverUsers } from "@/components/discover-users";
 import { FormEvent, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, ImagePlus, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, Settings, User, UsersRound } from "lucide-react";
+import { Bell, Bell as BellIcon, ChevronRight, CirclePlus, Globe, ImagePlus, LogOut, Megaphone, MessageCircle, MessagesSquare, Palette, Settings, User, UsersRound, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileShell } from "@/components/mobile-shell";
 import { ProfileDetailModal } from "@/components/profile-detail-modal";
@@ -9,12 +9,13 @@ import { ProfileEditor } from "@/components/profile-editor";
 import { THEME_COLORS, applyThemeColor } from "@/lib/theme";
 import { uploadUserMedia } from "@/lib/media";
 import { DeleteAccountButton } from "@/components/delete-account";
+import { formatUserNumber, loadUserNumbers } from "@/lib/user-number";
 
 
 type AuthorInfo = { id: string; display_name: string; avatar_url: string | null; background_url: string | null; bio: string | null; age: number | null; gender: string | null; hobby_tags: string[]; username: string };
 type Profile = { id: string; display_name: string; username: string; avatar_url: string | null; background_url: string | null; bio: string | null; hobby_tags: string[]; theme_color: string };
 type Recruitment = { id: string; author_id: string; title: string; body: string | null; created_at: string; author?: AuthorInfo | null };
-type Community = { id: string; owner_id: string; name: string; description: string | null; image_url: string | null; created_at: string };
+type Community = { id: string; owner_id: string; name: string; description: string | null; image_url: string | null; created_at: string; join_policy?: "open" | "approval" };
 type CommunityMembership = { community_id: string; status: "pending" | "approved" | "rejected" };
 type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null };
 type FriendRequest = { id: string; requester_id: string; created_at: string; requester?: AuthorInfo | null };
@@ -49,6 +50,7 @@ function HomePage() {
   const { user } = Route.useRouteContext();
   const [tab, setTab] = useState<"home" | "search" | "recruit" | "community" | "chat" | "cchat" | "notifications" | "profile" | "timeline">("home");
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userNumbers, setUserNumbers] = useState<Map<string, string>>(new Map());
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [unread, setUnread] = useState(0);
   const [modal, setModal] = useState<"recruit" | "community" | "post" | "theme" | "settings" | null>(null);
@@ -69,6 +71,7 @@ function HomePage() {
   const [communityRequests, setCommunityRequests] = useState<{ community_id: string; user_id: string; display_name: string; avatar_url: string | null }[]>([]);
   const [communityMemberships, setCommunityMemberships] = useState<Map<string, CommunityMembership["status"]>>(new Map());
   const [detailProfile, setDetailProfile] = useState<AuthorInfo | null>(null);
+  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
   const [page, setPage] = useState(1);
   const [posts, setPosts] = useState<Post[]>([]);
   const [postPage, setPostPage] = useState(1);
@@ -77,7 +80,8 @@ function HomePage() {
   const PAGE_SIZE = 10;
 
   async function load() {
-    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes, postRes] = await Promise.all([
+    const [numbers, profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes, postRes] = await Promise.all([
+      loadUserNumbers(),
       supabase.from("profiles").select("id,display_name,username,avatar_url,background_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
       supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(200),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
@@ -87,6 +91,7 @@ function HomePage() {
       supabase.from("community_members").select("community_id,status").eq("user_id", user.id),
       supabase.from("posts").select("id,author_id,body,image_urls,created_at").order("created_at", { ascending: false }).limit(200),
     ]);
+    setUserNumbers(numbers);
     if (profileRes.data) {
       setProfile(profileRes.data as Profile);
       setThemeColor((profileRes.data as Profile).theme_color || "#25B7A5");
@@ -193,7 +198,13 @@ function HomePage() {
   async function openCommunityChat(communityId: string) {
     const { data, error } = await supabase.rpc("get_community_conversation", { _community_id: communityId });
     if (error || !data) { setStatus(error?.message ?? "開けませんでした"); return; }
+    setSelectedCommunity(null);
     navigate({ to: "/chat/$conversationId", params: { conversationId: data } });
+  }
+
+  async function joinSelectedCommunity() {
+    if (!selectedCommunity) return;
+    await applyCommunity(selectedCommunity.id);
   }
   async function loadCommunityRequests() {
     const { data: mine } = await supabase.from("community_members").select("community_id").eq("user_id", user.id).eq("status", "approved").in("role", ["owner", "admin"]);
@@ -253,9 +264,9 @@ function HomePage() {
     { key: "notify", label: "通知", tone: "magenta", icon: <BellIcon />, onClick: () => setTab("notifications") },
   ];
 
-  return <MobileShell active={tab} onChange={setTab} unread={unread}>
+  return <MobileShell active={tab === "cchat" ? "home" : tab} onChange={setTab} unread={unread}>
     <header className="home-header">
-      <h1 className="home-hello">{profile?.display_name ?? "ゲスト"}さん</h1>
+      <h1 className="home-hello">{profile?.display_name ?? "ゲスト"}さん <small style={{ fontSize: 12, opacity: 0.65 }}>{formatUserNumber(userNumbers, user.id)}</small></h1>
       <div className="home-header-actions">
         <button aria-label="テーマ" className="round-btn" onClick={() => setModal("theme")}><Palette size={18} /></button>
         <button aria-label="設定" className="round-btn" onClick={() => { setStatus(""); setModal("settings"); }}><Settings size={18} /></button>
@@ -286,11 +297,11 @@ function HomePage() {
             const membership = communityMemberships.get(community.id);
             const isOwner = community.owner_id === user.id;
             const label = isOwner || membership === "approved" ? "参加済み" : membership === "pending" ? "申請済み" : "参加申請する";
-            return <article key={community.id} className={`community-card card-tile-${(["purple", "cyan", "green", "orange"] as const)[index % 4]}`}>
-              <div className="community-card-icon">{community.image_url ? <img src={community.image_url} alt="" /> : <UsersRound size={24} />}</div>
-              <div className="community-card-copy"><h3>{community.name}</h3><p>{community.description || "一緒に交流するメンバーを募集中です。"}</p></div>
-              <button className="pill-primary community-apply" disabled={isOwner || membership === "approved" || membership === "pending"} onClick={() => applyCommunity(community.id)}>{label}</button>
-            </article>;
+            return <button type="button" key={community.id} className={`community-card card-tile-${(["purple", "cyan", "green", "orange"] as const)[index % 4]}`} onClick={() => setSelectedCommunity(community)}>
+              <span className="community-card-icon">{community.image_url ? <img src={community.image_url} alt="" /> : <UsersRound size={24} />}</span>
+              <span className="community-card-copy"><h3>{community.name}</h3><p>{community.description || "一緒に交流するメンバーを募集中です。"}</p></span>
+              <span className={`community-status ${membership === "approved" || isOwner ? "is-joined" : ""}`}>{label}</span>
+            </button>;
           })}
         </section>}
     </main>}
@@ -467,6 +478,31 @@ function HomePage() {
       <button className="settings-row" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}><LogOut />ログアウト<ChevronRight /></button>
       <DeleteAccountButton />
     </div>}{modal === "recruit" && <form onSubmit={submitRecruitment}><label>募集タイトル<input name="title" required maxLength={80} placeholder="ゲーム仲間募集！" /></label><label>ひとこと（空白可）<textarea name="body" maxLength={1000} placeholder="よろしくね" /></label><button className="pill-primary">募集を投稿</button></form>}{modal === "community" && <form onSubmit={submitCommunity}><label>コミュニティ名<input name="name" required maxLength={60} /></label><label>説明<textarea name="description" maxLength={1000} /></label><p className="form-hint">作成後、あなたは自動的にオーナー兼管理者として参加します。</p><button className="pill-primary">作成して参加</button></form>}{modal === "post" && <form onSubmit={submitPost}><label>投稿内容<textarea name="body" required maxLength={2000} placeholder="今なにしてる？" /></label><button className="pill-primary">投稿する</button></form>}{status && <p className="form-notice">{status}</p>}<button className="secondary-action" onClick={() => setModal(null)}>キャンセル</button></section></div>}
+    {selectedCommunity && (() => {
+      const membership = communityMemberships.get(selectedCommunity.id);
+      const joined = selectedCommunity.owner_id === user.id || membership === "approved";
+      const pending = membership === "pending";
+      return <div className="modal-backdrop community-preview-backdrop" onMouseDown={() => setSelectedCommunity(null)}>
+        <section className="modal-sheet community-preview-sheet" role="dialog" aria-modal="true" aria-labelledby="community-preview-title" onMouseDown={(e) => e.stopPropagation()}>
+          <div className="sheet-handle" />
+          <button type="button" className="community-preview-close" aria-label="戻る" onClick={() => setSelectedCommunity(null)}><X /></button>
+          <div className="community-preview-header" style={selectedCommunity.image_url ? { backgroundImage: `url(${selectedCommunity.image_url})` } : undefined}>
+            <div className="community-preview-header-shade" />
+          </div>
+          <div className="community-preview-content">
+            <div className="community-preview-avatar">{selectedCommunity.image_url ? <img src={selectedCommunity.image_url} alt="" /> : <UsersRound />}</div>
+            <span className="discover-eyebrow">COMMUNITY</span>
+            <h2 id="community-preview-title">{selectedCommunity.name}</h2>
+            <p>{selectedCommunity.description || "一緒に交流するメンバーを募集中です。"}</p>
+            <span className="community-policy">{selectedCommunity.join_policy === "approval" ? "管理者の承認制" : "自由参加"}</span>
+            <div className="community-preview-actions">
+              {joined ? <button type="button" className="pill-primary" onClick={() => openCommunityChat(selectedCommunity.id)}><MessagesSquare />チャットへ進む</button> : <button type="button" className="pill-primary" disabled={pending} onClick={joinSelectedCommunity}>{pending ? "申請中" : "参加申請する"}</button>}
+              {!joined && <button type="button" className="secondary-action" onClick={() => setSelectedCommunity(null)}>戻る</button>}
+            </div>
+          </div>
+        </section>
+      </div>;
+    })()}
     {detailProfile && <ProfileDetailModal profile={detailProfile} onClose={() => setDetailProfile(null)} />}
   </MobileShell>;
 }
