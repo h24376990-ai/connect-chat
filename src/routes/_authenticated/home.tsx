@@ -47,7 +47,7 @@ type Tile = { key: string; label: string; tone: TileTone; icon: React.ReactNode;
 function HomePage() {
   const navigate = useNavigate();
   const { user } = Route.useRouteContext();
-  const [tab, setTab] = useState<"home" | "search" | "recruit" | "community" | "chat" | "notifications" | "profile" | "timeline">("home");
+  const [tab, setTab] = useState<"home" | "search" | "recruit" | "community" | "chat" | "cchat" | "notifications" | "profile" | "timeline">("home");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [unread, setUnread] = useState(0);
@@ -66,6 +66,7 @@ function HomePage() {
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
   const [friends, setFriends] = useState<Friend[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
+  const [communityRequests, setCommunityRequests] = useState<{ community_id: string; user_id: string; display_name: string; avatar_url: string | null }[]>([]);
   const [communityMemberships, setCommunityMemberships] = useState<Map<string, CommunityMembership["status"]>>(new Map());
   const [detailProfile, setDetailProfile] = useState<AuthorInfo | null>(null);
   const [page, setPage] = useState(1);
@@ -189,6 +190,27 @@ function HomePage() {
     await load();
     setTimeout(() => setStatus(""), 2000);
   }
+  async function openCommunityChat(communityId: string) {
+    const { data, error } = await supabase.rpc("get_community_conversation", { _community_id: communityId });
+    if (error || !data) { setStatus(error?.message ?? "開けませんでした"); return; }
+    navigate({ to: "/chat/$conversationId", params: { conversationId: data } });
+  }
+  async function loadCommunityRequests() {
+    const { data: mine } = await supabase.from("community_members").select("community_id").eq("user_id", user.id).eq("status", "approved").in("role", ["owner", "admin"]);
+    const ids = (mine ?? []).map((m) => m.community_id);
+    if (!ids.length) { setCommunityRequests([]); return; }
+    const { data: reqs } = await supabase.from("community_members").select("community_id,user_id").in("community_id", ids).eq("status", "pending");
+    const uids = Array.from(new Set((reqs ?? []).map((r) => r.user_id)));
+    const { data: profs } = uids.length ? await supabase.from("profiles").select("id,display_name,avatar_url").in("id", uids) : { data: [] };
+    const pm = new Map((profs ?? []).map((p) => [p.id, p]));
+    setCommunityRequests((reqs ?? []).map((r) => ({ community_id: r.community_id, user_id: r.user_id, display_name: pm.get(r.user_id)?.display_name ?? "?", avatar_url: pm.get(r.user_id)?.avatar_url ?? null })));
+  }
+  async function decideMember(communityId: string, uid: string, ok: boolean) {
+    const { error } = await supabase.rpc("approve_community_member", { _community_id: communityId, _user_id: uid, _approved: ok });
+    if (error) { setStatus(error.message); return; }
+    setStatus(ok ? "参加を承認しました" : "参加を拒否しました"); setTimeout(() => setStatus(""), 2000);
+    loadCommunityRequests();
+  }
   async function submitPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -226,7 +248,7 @@ function HomePage() {
     { key: "community", label: "コミュニティ", tone: "purple", icon: <UsersRound />, onClick: () => setTab("community") },
     { key: "friends", label: "探す", tone: "pink", icon: <User />, onClick: () => setTab("search") },
     { key: "chat", label: "チャット", tone: "orange", icon: <MessageCircle />, onClick: () => setTab("chat") },
-    { key: "cchat", label: "コミュニティチャット", tone: "blue", icon: <MessagesSquare />, onClick: () => setTab("chat") },
+    { key: "cchat", label: "コミュニティチャット", tone: "blue", icon: <MessagesSquare />, onClick: () => { setTab("cchat"); loadCommunityRequests(); } },
     { key: "timeline", label: "タイムライン", tone: "teal", icon: <Globe />, onClick: () => { setPostPage(1); setTab("timeline"); } },
     { key: "notify", label: "通知", tone: "magenta", icon: <BellIcon />, onClick: () => setTab("notifications") },
   ];
@@ -394,6 +416,25 @@ function HomePage() {
             </button>
           ))}
         </section>}
+    </main>}
+    {tab === "cchat" && <main className="simple-view">
+      <div className="page-title"><MessagesSquare /><div><p>メンバーと話そう</p><h2>コミュニティチャット</h2></div></div>
+      {status && <p className="form-notice">{status}</p>}
+      {communityRequests.length > 0 && <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <h3 style={{ margin: "4px 0" }}>参加申請</h3>
+        {communityRequests.map((r) => <div key={r.community_id + r.user_id} className="friend-row" style={{ cursor: "default" }}>
+          <span className="friend-avatar">{r.avatar_url ? <img src={r.avatar_url} alt="" /> : r.display_name.slice(0, 1)}</span>
+          <span className="friend-name">{r.display_name}<br /><small style={{ opacity: 0.7 }}>{communities.find((c) => c.id === r.community_id)?.name}</small></span>
+          <button className="ghost-pill" onClick={() => decideMember(r.community_id, r.user_id, false)}>拒否</button>
+          <button className="pill-primary" style={{ width: "auto", padding: "8px 14px" }} onClick={() => decideMember(r.community_id, r.user_id, true)}>承認</button>
+        </div>)}
+      </section>}
+      {(() => { const joined = communities.filter((c) => communityMemberships.get(c.id) === "approved" || c.owner_id === user.id);
+        return joined.length === 0
+          ? <div className="empty-panel"><MessagesSquare /><h3>参加中のコミュニティはありません</h3><p>コミュニティに参加するとメンバーと会話できます。</p></div>
+          : <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>{joined.map((c) => <button key={c.id} className="friend-row" onClick={() => openCommunityChat(c.id)}>
+            <span className="friend-avatar">{c.image_url ? <img src={c.image_url} alt="" /> : <UsersRound size={18} />}</span>
+            <span className="friend-name">{c.name}</span><MessagesSquare size={18} /></button>)}</section>; })()}
     </main>}
     {tab === "notifications" && <main className="simple-view">
       <div className="page-title"><Bell /><div><p>あなたへのお知らせ</p><h2>通知</h2></div></div>
