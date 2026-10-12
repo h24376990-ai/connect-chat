@@ -9,6 +9,7 @@ import { ProfileEditor } from "@/components/profile-editor";
 import { THEME_COLORS, applyThemeColor } from "@/lib/theme";
 import { uploadUserMedia } from "@/lib/media";
 import { DeleteAccountButton } from "@/components/delete-account";
+import { formatUserNumber, loadUserNumbers } from "@/lib/user-number";
 
 
 type AuthorInfo = { id: string; display_name: string; avatar_url: string | null; background_url: string | null; bio: string | null; age: number | null; gender: string | null; hobby_tags: string[]; username: string };
@@ -49,6 +50,7 @@ function HomePage() {
   const { user } = Route.useRouteContext();
   const [tab, setTab] = useState<"home" | "search" | "recruit" | "community" | "chat" | "cchat" | "notifications" | "profile" | "timeline">("home");
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userNumbers, setUserNumbers] = useState<Map<string, string>>(new Map());
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [unread, setUnread] = useState(0);
   const [modal, setModal] = useState<"recruit" | "community" | "post" | "theme" | "settings" | null>(null);
@@ -77,7 +79,8 @@ function HomePage() {
   const PAGE_SIZE = 10;
 
   async function load() {
-    const [profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes, postRes] = await Promise.all([
+    const [numbers, profileRes, recruitRes, notificationRes, notifListRes, friendReqRes, communityRes, membershipRes, postRes] = await Promise.all([
+      loadUserNumbers(),
       supabase.from("profiles").select("id,display_name,username,avatar_url,background_url,bio,hobby_tags,theme_color").eq("id", user.id).single(),
       supabase.from("friend_recruitments").select("id,author_id,title,body,created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(200),
       supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
@@ -87,6 +90,7 @@ function HomePage() {
       supabase.from("community_members").select("community_id,status").eq("user_id", user.id),
       supabase.from("posts").select("id,author_id,body,image_urls,created_at").order("created_at", { ascending: false }).limit(200),
     ]);
+    setUserNumbers(numbers);
     if (profileRes.data) {
       setProfile(profileRes.data as Profile);
       setThemeColor((profileRes.data as Profile).theme_color || "#25B7A5");
@@ -255,7 +259,7 @@ function HomePage() {
 
   return <MobileShell active={tab} onChange={setTab} unread={unread}>
     <header className="home-header">
-      <h1 className="home-hello">{profile?.display_name ?? "ゲスト"}さん</h1>
+      <h1 className="home-hello">{profile?.display_name ?? "ゲスト"}さん <small style={{ fontSize: 12, opacity: 0.65 }}>{formatUserNumber(userNumbers, user.id)}</small></h1>
       <div className="home-header-actions">
         <button aria-label="テーマ" className="round-btn" onClick={() => setModal("theme")}><Palette size={18} /></button>
         <button aria-label="設定" className="round-btn" onClick={() => { setStatus(""); setModal("settings"); }}><Settings size={18} /></button>

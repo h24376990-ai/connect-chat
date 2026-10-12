@@ -4,9 +4,10 @@ import { ChevronLeft, Image as ImageIcon, Phone, PhoneCall, Send } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { uploadUserMedia } from "@/lib/media";
 import { useCall } from "@/lib/call-context";
+import { formatUserNumber, loadUserNumbers } from "@/lib/user-number";
 
 type Message = { id: string; sender_id: string; kind: "text" | "image" | "video" | "system"; body: string | null; media_url: string | null; created_at: string; pending?: boolean };
-type Member = { user_id: string; display_name: string; avatar_url: string | null };
+type Member = { user_id: string; display_name: string; avatar_url: string | null; user_number?: string };
 
 const MAX_IMAGE = 10 * 1024 * 1024;
 const MAX_VIDEO = 50 * 1024 * 1024;
@@ -49,6 +50,7 @@ function ChatPage() {
   const call = useCall();
   const [messages, setMessages] = useState<Message[]>([]);
   const [members, setMembers] = useState<Map<string, Member>>(new Map());
+  const [userNumbers, setUserNumbers] = useState<Map<string, string>>(new Map());
   const [status, setStatus] = useState("");
   const [uploading, setUploading] = useState(false);
   const mediaInput = useRef<HTMLInputElement>(null);
@@ -61,6 +63,8 @@ function ChatPage() {
     const missing = ids.filter((id) => !membersRef.current.has(id));
     if (!missing.length) return;
     const { data: profs } = await supabase.from("profiles").select("id,display_name,avatar_url").in("id", missing);
+    const numbers = await loadUserNumbers();
+    setUserNumbers(numbers);
     setMembers((old) => {
       const m = new Map(old);
       (profs ?? []).forEach((p) => m.set(p.id, { user_id: p.id, display_name: p.display_name, avatar_url: p.avatar_url }));
@@ -182,8 +186,9 @@ function ChatPage() {
           </div>;
         }
         return <div key={m.id} className={`chat-row ${mine ? "mine" : "theirs"}`}>
-          {!mine && <div className="chat-avatar">{sender?.avatar_url ? <img src={sender.avatar_url} alt="" /> : (sender?.display_name?.slice(0, 1) ?? "?")}</div>}
+          {!mine && <div className="chat-avatar" title={sender ? formatUserNumber(userNumbers, sender.user_id) : undefined}>{sender?.avatar_url ? <img src={sender.avatar_url} alt="" /> : (sender?.display_name?.slice(0, 1) ?? "?")}</div>}
           <div className={`chat-bubble ${mine ? "mine" : ""}`} style={m.pending ? { opacity: 0.7 } : undefined}>
+            {!mine && sender && <small style={{ display: "block", opacity: 0.65, marginBottom: 4 }}>{formatUserNumber(userNumbers, sender.user_id)}</small>}
             {m.kind === "text" && <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{m.body}</p>}
             {m.kind === "image" && m.media_url && <img src={m.media_url} alt="" className="chat-media" />}
             {m.kind === "video" && m.media_url && <video src={m.media_url} controls className="chat-media" />}
