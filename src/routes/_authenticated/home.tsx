@@ -207,20 +207,18 @@ function HomePage() {
     setTimeout(() => setStatus(""), 2000);
   }
   async function openCommunityChat(communityId: string) {
-    const { data: channels, error: channelError } = await supabase.from("community_channels").select("id").eq("community_id", communityId).order("created_at").limit(1);
-    if (channelError) { setStatus(channelError.message); return; }
-    let conversationId: string | null = null;
-    if (channels?.[0]?.id) {
-      const { data, error } = await supabase.rpc("get_community_channel_conversation", { _channel_id: channels[0].id });
-      if (error) { setStatus(error.message); return; }
-      conversationId = data;
-    } else {
-      const { data, error } = await supabase.rpc("get_community_conversation", { _community_id: communityId });
-      if (error || !data) { setStatus(error?.message ?? "開けませんでした"); return; }
-      conversationId = data;
+    // Community entry intentionally uses the legacy community-level conversation.
+    // Channel discovery is optional and must not block the existing chat flow when
+    // the optional community_channels table is unavailable or empty.
+    setStatus("チャットを開いています…");
+    const { data: conversationId, error } = await supabase.rpc("get_community_conversation", { _community_id: communityId });
+    if (error || !conversationId) {
+      setStatus(error?.message ?? "コミュニティチャットを開けませんでした");
+      return;
     }
     setSelectedCommunity(null);
-    navigate({ to: "/chat/$conversationId", params: { conversationId } });
+    setStatus("");
+    navigate({ to: "/chat/$conversationId", params: { conversationId: String(conversationId) } });
   }
 
   async function joinSelectedCommunity() {
