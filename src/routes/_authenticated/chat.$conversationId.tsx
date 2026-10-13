@@ -4,11 +4,9 @@ import { ChevronLeft, Image as ImageIcon, Phone, PhoneCall, Send } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { uploadUserMedia } from "@/lib/media";
 import { useCall } from "@/lib/call-context";
-import { formatUserNumber, loadUserNumbers } from "@/lib/user-number";
 
 type Message = { id: string; sender_id: string; kind: "text" | "image" | "video" | "system"; body: string | null; media_url: string | null; created_at: string; pending?: boolean };
-type Member = { user_id: string; display_name: string; avatar_url: string | null; user_number?: string };
-type Channel = { id: string; name: string; description: string | null };
+type Member = { user_id: string; display_name: string; avatar_url: string | null };
 
 const MAX_IMAGE = 10 * 1024 * 1024;
 const MAX_VIDEO = 50 * 1024 * 1024;
@@ -51,9 +49,6 @@ function ChatPage() {
   const call = useCall();
   const [messages, setMessages] = useState<Message[]>([]);
   const [members, setMembers] = useState<Map<string, Member>>(new Map());
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [communityId, setCommunityId] = useState<string | null>(null);
-  const [userNumbers, setUserNumbers] = useState<Map<string, string>>(new Map());
   const [status, setStatus] = useState("");
   const [uploading, setUploading] = useState(false);
   const mediaInput = useRef<HTMLInputElement>(null);
@@ -66,8 +61,6 @@ function ChatPage() {
     const missing = ids.filter((id) => !membersRef.current.has(id));
     if (!missing.length) return;
     const { data: profs } = await supabase.from("profiles").select("id,display_name,avatar_url").in("id", missing);
-    const numbers = await loadUserNumbers();
-    setUserNumbers(numbers);
     setMembers((old) => {
       const m = new Map(old);
       (profs ?? []).forEach((p) => m.set(p.id, { user_id: p.id, display_name: p.display_name, avatar_url: p.avatar_url }));
@@ -78,15 +71,6 @@ function ChatPage() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data: conversation } = await supabase.from("conversations").select("kind,community_id,channel_id").eq("id", conversationId).maybeSingle();
-      if (conversation?.kind === "community" && conversation.community_id) {
-        setCommunityId(conversation.community_id);
-        const { data: channelRows } = await supabase.from("community_channels").select("id,name,description").eq("community_id", conversation.community_id).order("created_at");
-        setChannels((channelRows ?? []) as Channel[]);
-      } else {
-        setCommunityId(null);
-        setChannels([]);
-      }
       const { data, error } = await supabase.from("messages").select(COLS).eq("conversation_id", conversationId).order("created_at").limit(500);
       if (!alive) return;
       if (error) { setStatus(error.message); return; }
@@ -149,12 +133,6 @@ function ChatPage() {
     }
   }
 
-  async function switchChannel(channelId: string) {
-    const { data, error } = await supabase.rpc("get_community_channel_conversation", { _channel_id: channelId });
-    if (error || !data) { setStatus(error?.message ?? "チャンネルを開けませんでした"); return; }
-    navigate({ to: "/chat/$conversationId", params: { conversationId: data } });
-  }
-
   const goCall = () => navigate({ to: "/call/$conversationId", params: { conversationId } });
   const inThisCall = call.conversationId === conversationId && ["ringing", "connecting", "active"].includes(call.phase);
   const busyElsewhere = !inThisCall && ["ringing", "connecting", "active"].includes(call.phase);
@@ -178,9 +156,6 @@ function ChatPage() {
       <h1 className="home-hello" style={{ fontSize: 18 }}>チャット</h1>
       <button className="round-btn" aria-label="通話" onClick={onCallButton}><Phone size={18} /></button>
     </header>
-    {channels.length > 0 && <nav className="community-channel-tabs" aria-label="コミュニティのチャット欄">
-      {channels.map((channel) => <button key={channel.id} className="community-channel-tab" onClick={() => switchChannel(channel.id)}>{channel.name}</button>)}
-    </nav>}
     {inThisCall && <button className="call-return-bar" onClick={goCall}>
       <PhoneCall size={16} /> {call.phase === "ringing" ? "相手の応答を待っています" : call.phase === "active" ? "通話中" : "接続中"} — タップで通話画面に戻る
     </button>}
@@ -207,9 +182,8 @@ function ChatPage() {
           </div>;
         }
         return <div key={m.id} className={`chat-row ${mine ? "mine" : "theirs"}`}>
-          {!mine && <div className="chat-avatar" title={sender ? formatUserNumber(userNumbers, sender.user_id) : undefined}>{sender?.avatar_url ? <img src={sender.avatar_url} alt="" /> : (sender?.display_name?.slice(0, 1) ?? "?")}</div>}
+          {!mine && <div className="chat-avatar">{sender?.avatar_url ? <img src={sender.avatar_url} alt="" /> : (sender?.display_name?.slice(0, 1) ?? "?")}</div>}
           <div className={`chat-bubble ${mine ? "mine" : ""}`} style={m.pending ? { opacity: 0.7 } : undefined}>
-            {!mine && sender && <small style={{ display: "block", opacity: 0.65, marginBottom: 4 }}>{formatUserNumber(userNumbers, sender.user_id)}</small>}
             {m.kind === "text" && <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{m.body}</p>}
             {m.kind === "image" && m.media_url && <img src={m.media_url} alt="" className="chat-media" />}
             {m.kind === "video" && m.media_url && <video src={m.media_url} controls className="chat-media" />}

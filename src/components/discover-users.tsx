@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileDetailModal } from "@/components/profile-detail-modal";
-import { formatUserNumber, loadUserNumbers } from "@/lib/user-number";
 
 type P = { id: string; username: string; display_name: string; avatar_url: string | null; background_url: string | null; bio: string | null; age: number | null; gender: string | null; hobby_tags: string[] };
 type Rel = "none" | "sent" | "received" | "friend";
@@ -14,7 +13,6 @@ export function DiscoverUsers({ userId }: { userId: string }) {
   const [rel, setRel] = useState<Map<string, Rel>>(new Map());
   const [detail, setDetail] = useState<P | null>(null);
   const [msg, setMsg] = useState("");
-  const [userNumbers, setUserNumbers] = useState<Map<string, string>>(new Map());
 
   const loadRel = useCallback(async () => {
     const { data } = await supabase.from("friendships").select("requester_id,addressee_id,status").or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
@@ -34,7 +32,6 @@ export function DiscoverUsers({ userId }: { userId: string }) {
       setRows((data ?? []) as P[]); setTotal(count ?? 0);
     })();
     loadRel();
-    loadUserNumbers().then(setUserNumbers);
   }, [page, userId, loadRel]);
 
   async function apply(id: string) {
@@ -53,7 +50,7 @@ export function DiscoverUsers({ userId }: { userId: string }) {
           const r = rel.get(p.id) ?? "none";
           return <article key={p.id} className="card-tile card-tile-cyan" onClick={() => setDetail(p)} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 12, flexDirection: "row" }}>
             <span className="tile-icon tile-icon-cyan" style={{ flexShrink: 0 }}>{p.avatar_url ? <img src={p.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : p.display_name.slice(0, 1)}</span>
-            <div style={{ flex: 1, minWidth: 0 }}><h4 className="card-tile-title" style={{ margin: 0 }}>{p.display_name}</h4><small style={{ opacity: 0.7 }}>No.{formatUserNumber(userNumbers, p.id)}</small></div>
+            <div style={{ flex: 1, minWidth: 0 }}><h4 className="card-tile-title" style={{ margin: 0 }}>{p.display_name}</h4><small style={{ opacity: 0.7 }}>@{p.username}</small></div>
             <button className="pill-primary" style={{ width: "auto", padding: "8px 14px" }} disabled={r !== "none"} onClick={(e) => { e.stopPropagation(); apply(p.id); }}>{label[r]}</button>
           </article>;
         })}
